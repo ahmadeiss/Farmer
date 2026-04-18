@@ -72,6 +72,9 @@ export default function TopHeader({ className }: TopHeaderProps) {
   const unreadCount: number = unreadData?.unread_count ?? 0;
   const notifications: Notification[] = notifData?.results ?? [];
 
+  // Determine logo link based on user role
+  const logoHref = !isAuthenticated ? "/" : user?.role === "farmer" ? "/farmer/dashboard" : "/marketplace";
+
   const NOTIF_ICONS: Record<string, string> = {
     new_order: "🛒", order_status: "📦", low_stock: "⚠️",
     payment: "💰", review: "⭐", general: "🔔",
@@ -98,7 +101,7 @@ export default function TopHeader({ className }: TopHeaderProps) {
         <div className="flex items-center justify-between h-14 sm:h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group shrink-0" aria-label="حصاد الذكي">
+          <Link href={logoHref} className="flex items-center gap-2 group shrink-0" aria-label="حصاد الذكي">
             <div className="w-8 h-8 bg-forest-500 rounded-lg flex items-center justify-center
                             shadow-sm group-hover:shadow-forest/30 transition-shadow">
               <span className="text-white text-base leading-none">🌾</span>
