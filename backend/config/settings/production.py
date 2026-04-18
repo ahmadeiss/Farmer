@@ -48,6 +48,12 @@ if not env("REDIS_URL", default=""):
 if env("CLOUDINARY_URL", default=""):
     INSTALLED_APPS = [*INSTALLED_APPS, "cloudinary", "cloudinary_storage"]  # noqa: F405
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+else:
+    # Fallback: if CLOUDINARY_URL is not set, log a warning and use default storage
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning("⚠️ CLOUDINARY_URL environment variable is not set. File uploads will use Render's ephemeral filesystem and may be lost. Please set CLOUDINARY_URL in Render dashboard.")
+    # Use default file storage (will write to MEDIA_ROOT, which is ephemeral on Render)
 
 # Production logging to stdout (for container log aggregation)
 LOGGING = {

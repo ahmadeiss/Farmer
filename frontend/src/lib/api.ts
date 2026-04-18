@@ -107,12 +107,8 @@ export const catalogApi = {
   // Farmer product management
   getMyProducts: (params?: object) => apiClient.get("/catalog/my-products/", { params }),
   getMyProduct: (id: number) => apiClient.get(`/catalog/my-products/${id}/`),
-  createProduct: (data: FormData) => apiClient.post("/catalog/my-products/", data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  }),
-  updateProduct: (id: number, data: FormData) => apiClient.patch(`/catalog/my-products/${id}/`, data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  }),
+  createProduct: (data: FormData) => apiClient.post("/catalog/my-products/", data),
+  updateProduct: (id: number, data: FormData) => apiClient.patch(`/catalog/my-products/${id}/`, data),
   deleteProduct: (id: number) => apiClient.delete(`/catalog/my-products/${id}/`),
   getLowStockProducts: () => apiClient.get("/catalog/my-products/low-stock/"),
 };
