@@ -49,23 +49,7 @@ services:
       - key: QR_CODE_BASE_URL      # https://<your-vercel>.vercel.app/orders/confirm
         sync: false
 
-  # Daily cleanup: prune old read notifications + expired JWT blacklist rows.
-  # Keeps the Supabase free 500 MB tier comfortable indefinitely.
-  - type: cron
-    name: hasaad-cleanup
-    runtime: python
-    region: frankfurt
-    plan: free
-    rootDir: backend
-    schedule: "0 3 * * *"   # daily at 03:00 UTC
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python manage.py cleanup_old_data"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings.production
-      - key: SECRET_KEY
-        sync: false
-      - key: DATABASE_URL
-        sync: false
+# NOTE: Render's free tier does not allow cron jobs (Starter plan required).
+# The cleanup command `python manage.py cleanup_old_data` can be scheduled
+# via GitHub Actions (.github/workflows/cleanup.yml) or run manually from
+# the Render Shell. See README.md for details.
