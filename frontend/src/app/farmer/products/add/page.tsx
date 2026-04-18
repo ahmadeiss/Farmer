@@ -61,8 +61,13 @@ export default function AddProductPage() {
   });
 
   const { mutate: createProduct, isPending } = useMutation({
-    mutationFn: (formData: FormData) => {
-      return catalogApi.createProduct(formData);
+    mutationFn: (data: FormData) => {
+      const fd = new window.FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") fd.append(key, value);
+      });
+      if (imageFile) fd.append("image", imageFile);
+      return catalogApi.createProduct(fd);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-products"] });
@@ -72,26 +77,9 @@ export default function AddProductPage() {
     onError: (err: unknown) => {
       const d = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
       const first = d ? Object.values(d)[0] : null;
-      const errorMsg = Array.isArray(first) ? first[0] : "حدث خطأ، حاول مرة أخرى";
-      console.error("Upload error:", d);
-      toast.error(errorMsg);
+      toast.error(Array.isArray(first) ? first[0] : "حدث خطأ، حاول مرة أخرى");
     },
   });
-
-  const handleSubmit_custom = (data: FormData) => {
-    const fd = new window.FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      // Skip undefined, empty strings, or null values
-      if (value !== undefined && value !== "" && value !== null) {
-        fd.append(key, String(value));
-      }
-    });
-    // Append image file if selected
-    if (imageFile) {
-      fd.append("image", imageFile);
-    }
-    createProduct(fd);
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,7 +102,7 @@ export default function AddProductPage() {
       />
 
       <div className="max-w-2xl">
-        <form onSubmit={handleSubmit(handleSubmit_custom)} className="space-y-5">
+        <form onSubmit={handleSubmit((data) => createProduct(data))} className="space-y-5">
 
           {/* ── Section 1: Image ──────────────────────────────────────── */}
           <div className="card p-5">
