@@ -42,6 +42,13 @@ if not env("REDIS_URL", default=""):
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
 
+# ---- Cloud Media Storage (Cloudinary) ----
+# Render's filesystem is ephemeral; user uploads must live on an external store.
+# Cloudinary is picked up via CLOUDINARY_URL (cloudinary://API_KEY:API_SECRET@CLOUD_NAME).
+if env("CLOUDINARY_URL", default=""):
+    INSTALLED_APPS = [*INSTALLED_APPS, "cloudinary", "cloudinary_storage"]  # noqa: F405
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
 # Production logging to stdout (for container log aggregation)
 LOGGING = {
     "version": 1,
