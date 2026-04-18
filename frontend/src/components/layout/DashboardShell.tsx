@@ -70,8 +70,8 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
           </nav>
         </aside>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="page-container py-4 sm:py-6 farmer-page-content">{children}</div>
+        <main className="flex-1 overflow-y-auto md:pb-0 pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
+          <div className="page-container py-4 sm:py-6">{children}</div>
         </main>
       </div>
 
