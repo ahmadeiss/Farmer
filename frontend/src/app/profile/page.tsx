@@ -80,7 +80,12 @@ export default function BuyerProfilePage() {
       setLocationDirty(false);
       toast.success("تم حفظ معلومات التوصيل ✓");
     },
-    onError: () => toast.error("حدث خطأ أثناء الحفظ"),
+    onError: (error: any) => {
+      const message = error?.response?.data?.default_address?.[0] || 
+                      error?.response?.data?.message ||
+                      "حدث خطأ أثناء الحفظ";
+      toast.error(message);
+    },
   });
 
   const { mutate: updateAccount, isPending: accountPending } = useMutation({

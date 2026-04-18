@@ -15,7 +15,7 @@ USE_X_FORWARDED_HOST = True
 
 # Allow Render's *.onrender.com hostnames by default, plus anything in ALLOWED_HOSTS env.
 _extra_hosts = env.list("ALLOWED_HOSTS", default=[])
-ALLOWED_HOSTS = list({*ALLOWED_HOSTS, *_extra_hosts, ".onrender.com"})  # noqa: F405
+ALLOWED_HOSTS = list({*ALLOWED_HOSTS, *_extra_hosts, ".onrender.com", ".vercel.app"})  # noqa: F405
 
 # CSRF trusted origins (scheme + host) — required for admin over HTTPS.
 CSRF_TRUSTED_ORIGINS = env.list(

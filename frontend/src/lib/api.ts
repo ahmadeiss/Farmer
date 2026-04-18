@@ -145,10 +145,7 @@ export const walletApi = {
 
 export const farmerApi = {
   getProfile: () => apiClient.get("/farmers/profile/"),
-  updateProfile: (data: FormData | object) =>
-    apiClient.patch("/farmers/profile/", data, {
-      headers: data instanceof FormData ? { "Content-Type": "multipart/form-data" } : {},
-    }),
+  updateProfile: (data: FormData | object) => apiClient.patch("/farmers/profile/", data),
 };
 
 export const buyerApi = {

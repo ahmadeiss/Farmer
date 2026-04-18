@@ -94,7 +94,13 @@ export default function FarmerProfilePage() {
       setLocationDirty(false);
       toast.success("تم حفظ الملف الشخصي ✓");
     },
-    onError: () => toast.error("حدث خطأ أثناء الحفظ"),
+    onError: (error: any) => {
+      const fieldError = error?.response?.data?.address?.[0] || 
+                        error?.response?.data?.governorate?.[0] ||
+                        error?.response?.data?.message ||
+                        "حدث خطأ أثناء الحفظ";
+      toast.error(fieldError);
+    },
   });
 
   const onSubmit = (data: FormData) => {
