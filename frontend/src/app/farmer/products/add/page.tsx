@@ -62,11 +62,24 @@ export default function AddProductPage() {
 
   const { mutate: createProduct, isPending } = useMutation({
     mutationFn: (data: FormData) => {
-      const fd = new window.FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== "") fd.append(key, value);
-      });
-      if (imageFile) fd.append("image", imageFile);
+      const fd = new FormData();
+      
+      // Add form fields
+      fd.append("title", data.title);
+      fd.append("category", data.category);
+      fd.append("price", data.price);
+      fd.append("quantity_available", data.quantity_available);
+      fd.append("unit", data.unit);
+      
+      if (data.description) fd.append("description", data.description);
+      if (data.harvest_date) fd.append("harvest_date", data.harvest_date);
+      if (data.low_stock_threshold) fd.append("low_stock_threshold", data.low_stock_threshold);
+      
+      // Add image file
+      if (imageFile) {
+        fd.append("image", imageFile, "image.jpg");
+      }
+      
       return catalogApi.createProduct(fd);
     },
     onSuccess: () => {
@@ -74,18 +87,87 @@ export default function AddProductPage() {
       toast.success("تم نشر المنتج بنجاح ✓");
       router.push("/farmer/products");
     },
-    onError: (err: unknown) => {
-      const d = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
-      const first = d ? Object.values(d)[0] : null;
-      toast.error(Array.isArray(first) ? first[0] : "حدث خطأ، حاول مرة أخرى");
+    onError: (err: any) => {
+      // Better error handling
+      const errorData = err?.response?.data;
+      
+      if (typeof errorData === "string") {
+        toast.error(errorData);
+      } else if (errorData?.image) {
+        toast.error(Array.isArray(errorData.image) ? errorData.image[0] : "خطأ في الصورة");
+      } else if (errorData?.detail) {
+        toast.error(errorData.detail);
+      } else {
+        const firstError = Object.values(errorData || {})?.[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : "حدث خطأ، حاول مرة أخرى");
+      }
     },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+
+    // Validate file type - must be image
+    if (!file.type.startsWith("image/")) {
+      toast.error("الملف يجب أن يكون صورة فقط");
+      return;
+    }
+
+    // Convert image to JPEG and compress if needed
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if too large (max 1200px)
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              toast.error("حدث خطأ في معالجة الصورة");
+              return;
+            }
+
+            // Check file size (max 5MB after compression)
+            if (blob.size > 5 * 1024 * 1024) {
+              toast.error("حجم الصورة كبير جداً (الحد الأقصى 5MB)");
+              return;
+            }
+
+            // Create new file object
+            const jpegFile = new File([blob], "image.jpg", { type: "image/jpeg" });
+            setImageFile(jpegFile);
+            setImagePreview(URL.createObjectURL(blob));
+          },
+          "image/jpeg",
+          0.85 // 85% quality for JPEG compression
+        );
+      };
+      img.onerror = () => {
+        toast.error("حدث خطأ في قراءة الصورة");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      toast.error("حدث خطأ في قراءة الملف");
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -131,14 +213,14 @@ export default function AddProductPage() {
                 <>
                   <span className="text-3xl">📷</span>
                   <p className="text-sm font-semibold text-stone-500">اضغط لإضافة صورة</p>
-                  <p className="text-xs text-stone-400">JPG أو PNG، حتى 10MB</p>
+                  <p className="text-xs text-stone-400">JPG أو PNG، حتى 5MB</p>
                 </>
               )}
             </button>
             <input
               ref={imageInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png"
               className="hidden"
               onChange={handleImageChange}
             />
