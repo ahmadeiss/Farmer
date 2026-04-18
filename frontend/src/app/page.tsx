@@ -86,20 +86,6 @@ export default function HomePage() {
                 🌾 انضم كمزارع
               </Link>
             </div>
-
-            {/* Stats */}
-            <div className="flex gap-8 mt-10 pt-8 border-t border-white/20">
-              {[
-                { num: "٥٠+",  label: "مزارع" },
-                { num: "٢٠٠+", label: "منتج طازج" },
-                { num: "٥٠٠+", label: "عميل راضٍ" },
-              ].map((s) => (
-                <div key={s.label}>
-                  <p className="text-2xl font-extrabold text-white tabular-nums">{s.num}</p>
-                  <p className="text-sm text-forest-200">{s.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
