@@ -8,8 +8,8 @@ const LINKS = [
 ];
 
 const CONTACT = [
-  { icon: "📧", text: "info@smarthasaad.ps"     },
-  { icon: "📞", text: "+970 59 000 0000"         },
+  { icon: "📧", text: "ahmadbar887@gmail.com"     },
+  { icon: "📞", text: "+970 59 845 5262"         },
   { icon: "📍", text: "فلسطين — الضفة الغربية"  },
 ];
 
