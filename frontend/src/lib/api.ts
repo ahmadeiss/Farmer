@@ -198,4 +198,6 @@ export const adminApi = {
   settleWallet: (farmerId: number, data: object) =>
     apiClient.post(`/wallets/admin/wallets/${farmerId}/settle/`, data),
   getAdminProducts: (params?: object) => apiClient.get("/catalog/admin/products/", { params }),
+  toggleProductVisibility: (productId: number, isActive: boolean) =>
+    apiClient.patch(`/catalog/admin/products/${productId}/`, { is_active: isActive }),
 };

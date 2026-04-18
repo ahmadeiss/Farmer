@@ -24,6 +24,7 @@ const schema = z.object({
   description: z.string().optional(),
   harvest_date: z.string().optional(),
   low_stock_threshold: z.string().optional(),
+  is_active: z.boolean().optional().default(true),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -70,6 +71,7 @@ export default function AddProductPage() {
       fd.append("price", data.price);
       fd.append("quantity_available", data.quantity_available);
       fd.append("unit", data.unit);
+      fd.append("is_active", String(data.is_active ?? true));
       
       if (data.description) fd.append("description", data.description);
       if (data.harvest_date) fd.append("harvest_date", data.harvest_date);
@@ -327,6 +329,22 @@ export default function AddProductPage() {
                 {...register("low_stock_threshold")}
               />
             </div>
+          </div>
+
+          {/* ── Visibility ───────────────────────────────────────────────── */}
+          <div className="card p-5">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                defaultChecked={true}
+                {...register("is_active")}
+                className="w-5 h-5 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+              />
+              <span className="text-sm font-medium text-stone-900">
+                نشر المنتج الآن (اجعله ظاهراً للمشترين)
+              </span>
+            </label>
+            <p className="text-xs text-stone-500 mt-2">إذا أخفيت المنتج، لن يراه المشترون وسيتمكنون من شراؤه فقط عند إظهاره</p>
           </div>
 
           {/* ── Submit ────────────────────────────────────────────────── */}

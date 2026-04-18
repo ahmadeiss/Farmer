@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import DashboardShell from "@/components/layout/DashboardShell";
@@ -10,17 +10,31 @@ import SearchBar from "@/components/ui/SearchBar";
 import EmptyState from "@/components/ui/EmptyState";
 import Badge from "@/components/ui/Badge";
 import { TableRowSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "sonner";
 import type { PaginatedResponse, ProductList } from "@/types";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<PaginatedResponse<ProductList>>({
     queryKey: ["admin-products", search, page],
     queryFn: () =>
       adminApi.getAdminProducts({ search: search || undefined, page }).then((r) => r.data),
     placeholderData: (prev) => prev,
+  });
+
+  const { mutate: toggleVisibility, isPending: isToggling } = useMutation({
+    mutationFn: (vars: { productId: number; isActive: boolean }) =>
+      adminApi.toggleProductVisibility(vars.productId, vars.isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("تم تحديث حالة المنتج بنجاح");
+    },
+    onError: () => {
+      toast.error("حدث خطأ في تحديث المنتج");
+    },
   });
 
   return (
@@ -59,12 +73,13 @@ export default function AdminProductsPage() {
                   <th>السعر</th>
                   <th>المخزون</th>
                   <th>الحالة</th>
+                  <th>التحكم</th>
                   <th>تاريخ الإضافة</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => <TableRowSkeleton key={i} cols={6} />)
+                  Array.from({ length: 8 }).map((_, i) => <TableRowSkeleton key={i} cols={7} />)
                 ) : (
                   data!.results.map((product) => (
                     <tr key={product.id}>
@@ -85,6 +100,24 @@ export default function AdminProductsPage() {
                         ) : (
                           <Badge variant="gray">مخفي</Badge>
                         )}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() =>
+                            toggleVisibility({
+                              productId: product.id,
+                              isActive: !product.is_active,
+                            })
+                          }
+                          disabled={isToggling}
+                          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                            product.is_active
+                              ? "bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                              : "bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50"
+                          }`}
+                        >
+                          {product.is_active ? "إخفاء" : "إظهار"}
+                        </button>
                       </td>
                       <td className="text-stone-400 text-xs whitespace-nowrap">{formatDate(product.created_at)}</td>
                     </tr>

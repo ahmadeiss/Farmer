@@ -89,11 +89,25 @@ export default function EditProductPage() {
 
   const { mutate: updateProduct, isPending } = useMutation({
     mutationFn: (data: FormData) => {
-      const fd = new window.FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== "") fd.append(key, String(value));
-      });
-      if (imageFile) fd.append("image", imageFile);
+      const fd = new FormData();
+      
+      // Add form fields
+      fd.append("title", data.title);
+      fd.append("category", data.category);
+      fd.append("price", data.price);
+      fd.append("quantity_available", data.quantity_available);
+      fd.append("unit", data.unit);
+      fd.append("is_active", String(data.is_active ?? true));
+      
+      if (data.description) fd.append("description", data.description);
+      if (data.harvest_date) fd.append("harvest_date", data.harvest_date);
+      if (data.low_stock_threshold) fd.append("low_stock_threshold", data.low_stock_threshold);
+      
+      // Add image file if changed
+      if (imageFile) {
+        fd.append("image", imageFile, "image.jpg");
+      }
+      
       return catalogApi.updateProduct(id, fd);
     },
     onSuccess: () => {
@@ -102,18 +116,87 @@ export default function EditProductPage() {
       toast.success("تم تحديث المنتج بنجاح ✓");
       router.push("/farmer/products");
     },
-    onError: (err: unknown) => {
-      const d = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
-      const first = d ? Object.values(d)[0] : null;
-      toast.error(Array.isArray(first) ? first[0] : "حدث خطأ، حاول مرة أخرى");
+    onError: (err: any) => {
+      // Better error handling
+      const errorData = err?.response?.data;
+      
+      if (typeof errorData === "string") {
+        toast.error(errorData);
+      } else if (errorData?.image) {
+        toast.error(Array.isArray(errorData.image) ? errorData.image[0] : "خطأ في الصورة");
+      } else if (errorData?.detail) {
+        toast.error(errorData.detail);
+      } else {
+        const firstError = Object.values(errorData || {})?.[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : "حدث خطأ، حاول مرة أخرى");
+      }
     },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+
+    // Validate file type - must be image
+    if (!file.type.startsWith("image/")) {
+      toast.error("الملف يجب أن يكون صورة فقط");
+      return;
+    }
+
+    // Convert image to JPEG and compress if needed
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if too large (max 1200px)
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert to JPEG blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              toast.error("حدث خطأ في معالجة الصورة");
+              return;
+            }
+
+            // Check file size (max 5MB after compression)
+            if (blob.size > 5 * 1024 * 1024) {
+              toast.error("حجم الصورة كبير جداً (الحد الأقصى 5MB)");
+              return;
+            }
+
+            // Create new file object
+            const jpegFile = new File([blob], "image.jpg", { type: "image/jpeg" });
+            setImageFile(jpegFile);
+            setImagePreview(URL.createObjectURL(blob));
+          },
+          "image/jpeg",
+          0.85 // 85% quality for JPEG compression
+        );
+      };
+      img.onerror = () => {
+        toast.error("حدث خطأ في قراءة الصورة");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      toast.error("حدث خطأ في قراءة الملف");
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -166,7 +249,7 @@ export default function EditProductPage() {
                   </>
                 )}
               </button>
-              <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              <input ref={imageInputRef} type="file" accept="image/jpeg,image/jpg,image/png" className="hidden" onChange={handleImageChange} />
             </div>
 
             {/* ── Basic Info ────────────────────────────────────────── */}
@@ -232,6 +315,21 @@ export default function EditProductPage() {
                   placeholder="10" hint="نرسل لك تنبيهاً عند هذه الكمية"
                   {...register("low_stock_threshold")} />
               </div>
+            </div>
+
+            {/* ── Visibility ───────────────────────────────────────────── */}
+            <div className="card p-5">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  {...register("is_active")}
+                  className="w-5 h-5 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+                />
+                <span className="text-sm font-medium text-stone-900">
+                  نشر المنتج (اجعله ظاهراً للمشترين)
+                </span>
+              </label>
+              <p className="text-xs text-stone-500 mt-2">إذا أخفيت المنتج، لن يراه المشترون وسيتمكنون من شراؤه فقط عند إظهاره</p>
             </div>
 
             {/* ── Submit ────────────────────────────────────────────── */}
