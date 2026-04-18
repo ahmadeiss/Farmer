@@ -1,0 +1,54 @@
+# ============================================================
+# Smart Hasaad — Render Blueprint
+# One-click deploy for backend (Django) + managed Postgres.
+# Apply via: Render Dashboard → New → Blueprint → select this repo.
+# ============================================================
+services:
+  - type: web
+    name: hasaad-backend
+    runtime: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    healthCheckPath: /api/docs/
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: QR_CODE_BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hasaad-db
+          property: connectionString
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: JWT_ACCESS_TOKEN_LIFETIME_MINUTES
+        value: "60"
+      - key: JWT_REFRESH_TOKEN_LIFETIME_DAYS
+        value: "7"
+      - key: OTP_PROVIDER
+        value: mock
+      - key: TRANSCRIPTION_SERVICE
+        value: stub
+
+databases:
+  - name: hasaad-db
+    databaseName: hasaad
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: 16

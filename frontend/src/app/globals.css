@@ -1,0 +1,306 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Smart Hasaad — Global Styles
+   Arabic-first RTL design system · Mobile-first
+   (Cairo font is self-hosted via next/font/google — see app/layout.tsx)
+   ───────────────────────────────────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Font — resolved from next/font CSS variable */
+  --font-primary: var(--font-cairo), 'IBM Plex Sans Arabic', sans-serif;
+
+  /* Brand Colors */
+  --color-forest-500: #1a9d65;
+  --color-forest-600: #127d50;
+  --color-forest-700: #0f6341;
+  --color-earth-500:  #d4771a;
+  --color-earth-600:  #b85f14;
+
+  /* Surface Colors */
+  --color-bg:         #faf9f7;   /* Warm page background */
+  --color-surface:    #ffffff;   /* Cards / panels */
+  --color-surface-2:  #f3f1ee;   /* Secondary surface */
+  --color-border:     #e8e4df;   /* Default border */
+  --color-border-2:   #d6d0ca;   /* Stronger border */
+
+  /* Text Colors */
+  --color-text-primary:   #1c1917;  /* Near-black warm */
+  --color-text-secondary: #6b6560;  /* Muted */
+  --color-text-tertiary:  #9c958e;  /* Placeholder */
+  --color-text-inverse:   #ffffff;
+
+  /* Radius */
+  --radius-sm:  0.375rem;
+  --radius-md:  0.75rem;
+  --radius-lg:  1rem;
+  --radius-xl:  1.25rem;
+  --radius-2xl: 1.5rem;
+
+  /* Bottom nav height (mobile safe) */
+  --bottom-nav-h: 4.25rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE RESET & GLOBAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    direction: rtl;
+    font-family: var(--font-primary);
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-primary);
+    line-height: 1.625;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+  }
+
+  /* Typography scale */
+  h1 { @apply text-4xl font-bold leading-tight text-stone-900; }
+  h2 { @apply text-3xl font-bold leading-tight text-stone-900; }
+  h3 { @apply text-2xl font-bold leading-snug text-stone-900; }
+  h4 { @apply text-xl font-semibold leading-snug text-stone-800; }
+  h5 { @apply text-lg font-semibold leading-normal text-stone-800; }
+  h6 { @apply text-base font-semibold leading-normal text-stone-700; }
+
+  p { @apply text-base text-stone-700 leading-relaxed; }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img, video { display: block; max-width: 100%; }
+
+  button { cursor: pointer; font-family: inherit; }
+
+  input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* Numeric display — use tabular nums for prices */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Page Wrappers ──────────────────────────────────────────────────── */
+  .page-wrapper {
+    @apply min-h-screen bg-surface-warm flex flex-col;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Buyer pages have bottom nav on mobile — add padding */
+  .buyer-page-content {
+    @apply pb-24 md:pb-8;
+  }
+
+  /* Farmer pages have bottom nav on mobile */
+  .farmer-page-content {
+    @apply pb-24 md:pb-8;
+  }
+
+  /* ── Cards ──────────────────────────────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-xl border border-surface-border shadow-card overflow-hidden;
+  }
+
+  .card-sm {
+    @apply bg-white rounded-lg border border-surface-border shadow-xs overflow-hidden;
+  }
+
+  .card-lg {
+    @apply bg-white rounded-2xl border border-surface-border shadow-md overflow-hidden;
+  }
+
+  .card-interactive {
+    @apply card cursor-pointer transition-all duration-200
+           hover:shadow-card-hover hover:-translate-y-0.5
+           active:scale-[0.99] active:shadow-card;
+  }
+
+  .card-ghost {
+    @apply bg-surface-muted rounded-xl border border-surface-border overflow-hidden;
+  }
+
+  /* ── Inputs ─────────────────────────────────────────────────────────── */
+  .field-input {
+    @apply w-full px-4 py-3 rounded-lg border border-surface-border bg-white
+           text-stone-900 placeholder:text-stone-400 text-base
+           transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-forest-500/30 focus:border-forest-500
+           disabled:bg-surface-muted disabled:text-stone-400 disabled:cursor-not-allowed
+           read-only:bg-surface-muted;
+  }
+
+  .field-input-error {
+    @apply field-input border-danger-500 focus:ring-danger-500/30 focus:border-danger-500;
+  }
+
+  .field-label {
+    @apply block text-sm font-semibold text-stone-700 mb-1.5;
+  }
+
+  .field-hint {
+    @apply mt-1.5 text-xs text-stone-500;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-xs text-danger-600 flex items-center gap-1;
+  }
+
+  /* ── Badges / Pills ──────────────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full
+           text-xs font-semibold border leading-none whitespace-nowrap;
+  }
+
+  .badge-sm {
+    @apply badge px-2 py-0.5 text-2xs;
+  }
+
+  .badge-lg {
+    @apply badge px-3 py-1 text-sm;
+  }
+
+  /* Status badge variants */
+  .badge-success { @apply badge bg-forest-50 text-forest-700 border-forest-200; }
+  .badge-warning { @apply badge bg-warning-50 text-warning-700 border-warning-100; }
+  .badge-danger  { @apply badge bg-danger-50  text-danger-700  border-danger-100; }
+  .badge-info    { @apply badge bg-info-50    text-info-700    border-info-100; }
+  .badge-neutral { @apply badge bg-stone-100  text-stone-600   border-stone-200; }
+  .badge-earth   { @apply badge bg-earth-50   text-earth-700   border-earth-200; }
+
+  /* ── Dividers ────────────────────────────────────────────────────────── */
+  .divider {
+    @apply w-full h-px bg-surface-border my-4;
+  }
+
+  /* ── Section & Page Headers ──────────────────────────────────────────── */
+  .section-title {
+    @apply text-xl font-bold text-stone-900;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-stone-500 mt-0.5;
+  }
+
+  /* ── Avatar ──────────────────────────────────────────────────────────── */
+  .avatar {
+    @apply rounded-full bg-forest-100 flex items-center justify-center
+           text-forest-700 font-bold overflow-hidden flex-shrink-0;
+  }
+
+  .avatar-sm  { @apply avatar w-8 h-8 text-xs; }
+  .avatar-md  { @apply avatar w-10 h-10 text-sm; }
+  .avatar-lg  { @apply avatar w-12 h-12 text-base; }
+  .avatar-xl  { @apply avatar w-16 h-16 text-xl; }
+
+  /* ── Skeleton Loader ─────────────────────────────────────────────────── */
+  .skeleton {
+    @apply rounded-md bg-stone-200 animate-shimmer;
+    background: linear-gradient(
+      90deg,
+      #f0ede9 25%,
+      #e8e4e0 50%,
+      #f0ede9 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* ── Stat Card ───────────────────────────────────────────────────────── */
+  .stat-card {
+    @apply card p-5 flex flex-col gap-3;
+  }
+
+  /* ── Table Styles ────────────────────────────────────────────────────── */
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table thead {
+    @apply bg-stone-50 border-b border-surface-border;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-right font-semibold text-stone-600 text-xs uppercase tracking-wide;
+  }
+
+  .data-table td {
+    @apply px-4 py-3.5 text-stone-700;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-surface-border transition-colors duration-100 hover:bg-stone-50/70;
+  }
+
+  .data-table tbody tr:last-child {
+    @apply border-b-0;
+  }
+
+  /* ── Focus Ring ──────────────────────────────────────────────────────── */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500
+           focus-visible:ring-offset-2;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--color-surface-2); }
+::-webkit-scrollbar-thumb {
+  background: #c5bfb9;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: #a09a94; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE SAFE-AREA SUPPORT (iPhone notch, home indicator)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARABIC RTL OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+[dir="rtl"] .ltr-override { direction: ltr; text-align: left; }
+
+/* Phone numbers, prices, codes — always LTR */
+.dir-ltr { direction: ltr; unicode-bidi: embed; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
