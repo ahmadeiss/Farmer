@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { QRCodeSVG } from "qrcode.react";
 import { ordersApi, extractApiError } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import TopHeader from "@/components/layout/TopHeader";
 import { BuyerBottomNav } from "@/components/layout/MobileBottomNav";
@@ -21,6 +22,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();
+  const { user } = useAuthStore();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [appOrigin, setAppOrigin] = useState("");
   useEffect(() => { setAppOrigin(window.location.origin); }, []);
@@ -51,8 +53,10 @@ export default function OrderDetailPage() {
 
   const isCancelled = order.status === "cancelled";
   const isDelivered = order.status === "delivered";
+  // Only the BUYER may confirm receipt — farmers manage status from their dashboard
   const canConfirmManually =
-    order.status === "out_for_delivery" || order.status === "ready_for_pickup";
+    user?.role === "buyer" &&
+    (order.status === "out_for_delivery" || order.status === "ready_for_pickup");
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-warm">
