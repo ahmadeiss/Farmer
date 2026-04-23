@@ -20,11 +20,8 @@ urlpatterns = [
     path("farmer-orders/<int:pk>/", views.FarmerOrderDetailView.as_view(), name="farmer-order-detail"),
     path("farmer-orders/<int:order_id>/status/", views.update_order_status_view, name="order-status-update"),
 
-    # QR confirmation (via scanned token)
+    # QR confirmation
     path("confirm-qr/<uuid:qr_token>/", views.confirm_qr_view, name="confirm-qr"),
-
-    # Manual receipt confirmation by buyer (fallback when QR scan isn't possible)
-    path("my-orders/<int:order_id>/confirm-receipt/", views.buyer_confirm_receipt_view, name="buyer-confirm-receipt"),
 
     # Reviews
     path("reviews/", views.ReviewCreateView.as_view(), name="review-create"),

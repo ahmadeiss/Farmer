@@ -210,47 +210,7 @@ def confirm_qr_view(request, qr_token):
     except BusinessLogicError as e:
         return Response({"error": e.message, "code": e.code}, status=status.HTTP_400_BAD_REQUEST)
 
-    _notify_farmer_delivered(order)
     return Response({"message": "تم تأكيد التسليم بنجاح.", "order_id": order.id})
-
-
-@api_view(["POST"])
-@permission_classes([IsBuyer])
-def buyer_confirm_receipt_view(request, order_id):
-    """
-    Manual delivery confirmation by the buyer (fallback when QR scanning fails).
-    Uses the same service logic as QR confirmation — just finds the order by ID
-    instead of qr_token so the buyer doesn't need to scan anything.
-    """
-    try:
-        order = Order.objects.select_related("buyer", "farmer").get(
-            id=order_id, buyer=request.user
-        )
-    except Order.DoesNotExist:
-        return Response({"error": "الطلب غير موجود."}, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-        confirmed_order = OrderService.confirm_qr_delivery(str(order.qr_token), user=request.user)
-    except BusinessLogicError as e:
-        return Response({"error": e.message, "code": e.code}, status=status.HTTP_400_BAD_REQUEST)
-
-    _notify_farmer_delivered(confirmed_order)
-    return Response({"message": "تم تأكيد الاستلام بنجاح.", "order_id": confirmed_order.id})
-
-
-def _notify_farmer_delivered(order: Order):
-    """Fire a non-blocking notification to the farmer when delivery is confirmed."""
-    try:
-        from apps.notifications.services import NotificationService
-        NotificationService.notify_user(
-            user=order.farmer,
-            title="🎉 تم تأكيد التسليم!",
-            body=f"أكّد {order.buyer.full_name} استلام طلبه #{order.id} بنجاح.",
-            notification_type="order_status",
-            data={"order_id": order.id},
-        )
-    except Exception as exc:
-        logger.warning("Farmer delivery notification failed for order #%s: %s", order.id, exc)
 
 
 # ── Admin Order Views ─────────────────────────────────────────────────────────
