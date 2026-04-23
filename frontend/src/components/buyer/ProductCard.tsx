@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "@/lib/api";
@@ -22,11 +23,19 @@ export default function ProductCard({ product }: ProductCardProps) {
   const queryClient = useQueryClient();
   const isBuyer = user?.role === "buyer";
 
+  // Max = available stock, min = 1 (always at least 1 unit)
+  const maxQty = Math.max(1, Number(product.quantity_available));
+  const [qty, setQty] = useState(1);
+
+  const decrement = () => setQty((q) => Math.max(1, q - 1));
+  const increment = () => setQty((q) => Math.min(maxQty, q + 1));
+
   const { mutate: addToCart, isPending } = useMutation({
-    mutationFn: () => cartApi.addToCart(product.id, 1),
+    mutationFn: () => cartApi.addToCart(product.id, qty),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      toast.success("أُضيف إلى السلة ✓");
+      toast.success(`أُضيف ${qty} ${product.unit_display} إلى السلة ✓`);
+      setQty(1); // reset after adding
     },
     onError: async (err: unknown) => {
       const apiErr = err as ApiError;
@@ -34,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       const msg  = apiErr?.response?.data?.error ?? "";
 
       if (code === "different_farmer") {
-        // Offer to clear cart and add this product instead
+        const currentQty = qty; // capture for closure
         toast(
           (t) => (
             <div className="flex flex-col gap-2 text-sm text-right" dir="rtl">
@@ -47,9 +56,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                   onClick={async () => {
                     toast.dismiss(t.id);
                     await cartApi.clearCart();
-                    await cartApi.addToCart(product.id, 1);
+                    await cartApi.addToCart(product.id, currentQty);
                     queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    toast.success("تم إفراغ السلة وإضافة المنتج ✓");
+                    toast.success(`تم إفراغ السلة وإضافة ${currentQty} ${product.unit_display} ✓`);
+                    setQty(1);
                   }}
                   className="flex-1 bg-forest-500 hover:bg-forest-600 text-white
                              text-xs font-bold py-1.5 px-3 rounded-lg transition-colors"
@@ -68,6 +78,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           ),
           { duration: 10_000, style: { maxWidth: "340px" } }
         );
+      } else if (code === "insufficient_stock") {
+        toast.error(`الكمية المتاحة ${product.quantity_available} ${product.unit_display} فقط`);
+        setQty(maxQty);
       } else {
         toast.error(msg || "تعذّر الإضافة إلى السلة");
       }
@@ -145,40 +158,83 @@ export default function ProductCard({ product }: ProductCardProps) {
           🌍 {product.farmer_location}
         </p>
 
-        {/* Price + Add to cart */}
-        <div className="flex items-end justify-between mt-auto gap-2">
+        {/* Price */}
+        <div className="mt-auto">
           <PriceDisplay
             amount={product.price}
             unit={product.unit_display}
             size="md"
           />
+        </div>
 
-          {isBuyer && !outOfStock && (
+        {/* Quantity controls + Add to cart — buyer only, in-stock only */}
+        {isBuyer && !outOfStock && (
+          <div className="flex items-center gap-1.5 mt-3">
+            {/* − button */}
+            <button
+              type="button"
+              onClick={decrement}
+              disabled={qty <= 1 || isPending}
+              aria-label="تقليل الكمية"
+              className="w-7 h-7 rounded-md border border-surface-border bg-white
+                         text-stone-600 font-bold text-sm flex items-center justify-center
+                         hover:bg-stone-100 active:scale-90 disabled:opacity-30
+                         transition-all duration-100 shrink-0"
+            >
+              −
+            </button>
+
+            {/* Quantity display */}
+            <span className="w-9 text-center text-sm font-bold text-stone-900 tabular-nums select-none">
+              {qty}
+            </span>
+
+            {/* + button */}
+            <button
+              type="button"
+              onClick={increment}
+              disabled={qty >= maxQty || isPending}
+              aria-label="زيادة الكمية"
+              className="w-7 h-7 rounded-md border border-surface-border bg-white
+                         text-stone-600 font-bold text-sm flex items-center justify-center
+                         hover:bg-stone-100 active:scale-90 disabled:opacity-30
+                         transition-all duration-100 shrink-0"
+            >
+              +
+            </button>
+
+            {/* unit label */}
+            <span className="text-2xs text-stone-400 truncate flex-1">{product.unit_display}</span>
+
+            {/* Add to cart button */}
             <button
               onClick={() => addToCart()}
               disabled={isPending}
               aria-label={`إضافة ${product.title} إلى السلة`}
-              className="shrink-0 w-9 h-9 bg-forest-500 hover:bg-forest-600
-                         disabled:opacity-50 text-white rounded-lg
-                         flex items-center justify-center
+              className="shrink-0 h-7 px-2.5 bg-forest-500 hover:bg-forest-600
+                         disabled:opacity-50 text-white rounded-lg text-xs font-bold
+                         flex items-center gap-1
                          transition-all duration-150 active:scale-90 shadow-sm"
             >
               {isPending ? (
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10"
                     stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 4v16m8-8H4" />
-                </svg>
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m5-9l2 9" />
+                  </svg>
+                  أضف
+                </>
               )}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Harvest date */}
         {product.harvest_date && (
