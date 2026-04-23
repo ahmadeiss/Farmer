@@ -151,11 +151,12 @@ SIMPLE_JWT = {
 }
 
 # ---- CORS ----
+# NOTE: django-cors-headers does NOT support wildcards in CORS_ALLOWED_ORIGINS.
+# Wildcard domain matching is handled via CORS_ALLOWED_ORIGIN_REGEXES in production.py.
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://*.vercel.app",
-    "https://*.onrender.com",
+    "http://192.168.1.75:3000",
 ])
 CORS_ALLOW_CREDENTIALS = True
 

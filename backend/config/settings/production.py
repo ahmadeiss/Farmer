@@ -23,6 +23,18 @@ CSRF_TRUSTED_ORIGINS = env.list(
     default=["https://*.onrender.com", "https://*.vercel.app"],
 )
 
+# CORS — django-cors-headers does NOT support wildcards in CORS_ALLOWED_ORIGINS.
+# Use CORS_ALLOWED_ORIGIN_REGEXES for pattern-based matching across all
+# Vercel preview/production URLs and any custom domain set in CORS_ALLOWED_ORIGINS env.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://[\w\-]+\.vercel\.app$",   # all Vercel deployments
+    r"^https://[\w\-]+\.onrender\.com$", # Render services talking to each other
+]
+# Allow any explicit origins passed via env (e.g. custom domain: https://hasaad.ps)
+_extra_cors = env.list("CORS_ALLOWED_ORIGINS", default=[])
+if _extra_cors:
+    CORS_ALLOWED_ORIGINS = _extra_cors  # noqa: F405
+
 # Security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

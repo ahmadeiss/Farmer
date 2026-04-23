@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { authApi } from "@/lib/api";
+import { authApi, extractApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { useGuestOnly } from "@/hooks/useAuthGuard";
 import Button from "@/components/ui/Button";
@@ -75,11 +75,7 @@ function RegisterPageContent() {
       if (role === "farmer") router.push("/farmer/dashboard");
       else router.push("/marketplace");
     } catch (err: unknown) {
-      const errorData = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
-      if (errorData) {
-        const firstError = Object.values(errorData)[0];
-        toast.error(Array.isArray(firstError) ? firstError[0] : "حدث خطأ. حاول مرة أخرى.");
-      }
+      toast.error(extractApiError(err, "حدث خطأ أثناء إنشاء الحساب. حاول مرة أخرى."));
     } finally {
       setIsLoading(false);
     }

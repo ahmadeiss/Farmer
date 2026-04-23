@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { authApi } from "@/lib/api";
+import { authApi, extractApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { useGuestOnly } from "@/hooks/useAuthGuard";
 import Button from "@/components/ui/Button";
@@ -73,8 +73,7 @@ function LoginPageContent() {
       else if (user.role === "driver") router.push("/driver/dashboard");
       else router.push("/marketplace");
     } catch (err: unknown) {
-      const errorData = (err as { response?: { data?: { error?: string } } })?.response?.data;
-      toast.error(errorData?.error || "بيانات الدخول غير صحيحة");
+      toast.error(extractApiError(err, "بيانات الدخول غير صحيحة"));
     } finally {
       setIsLoading(false);
     }

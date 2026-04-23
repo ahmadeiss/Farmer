@@ -86,6 +86,48 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
+/**
+ * Extract a human-readable Arabic error message from any API error.
+ *
+ * DRF can return errors in several shapes:
+ *   { "error": "..." }                        ← custom views
+ *   { "detail": "..." }                       ← DRF generic
+ *   { "non_field_errors": ["..."] }           ← serializer validate()
+ *   { "field_name": ["..."] }                 ← field-level validation
+ *   network/CORS failure → error.request set, no error.response
+ */
+export function extractApiError(err: unknown, fallback = "حدث خطأ غير متوقع"): string {
+  const axiosErr = err as { response?: { data?: Record<string, unknown> }; request?: unknown; message?: string };
+
+  // Network error (no response): CORS block, server down, no internet
+  if (!axiosErr.response && axiosErr.request) {
+    return "تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.";
+  }
+
+  const data = axiosErr.response?.data;
+  if (!data) return fallback;
+
+  // { "error": "..." }
+  if (typeof data.error === "string") return data.error;
+
+  // { "detail": "..." }
+  if (typeof data.detail === "string") return data.detail;
+
+  // { "non_field_errors": ["..."] }
+  if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
+    return String(data.non_field_errors[0]);
+  }
+
+  // { "field": ["..."] } — take the first field error
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (Array.isArray(val) && val.length > 0) return String(val[0]);
+    if (typeof val === "string") return val;
+  }
+
+  return fallback;
+}
+
 // ── API endpoint functions ─────────────────────────────────────────────────
 
 export const authApi = {
