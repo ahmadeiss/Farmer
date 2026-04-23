@@ -1,6 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import TopHeader from "@/components/layout/TopHeader";
 import Footer from "@/components/layout/Footer";
+import { useAuthStore } from "@/store/authStore";
+import { dashboardFor } from "@/hooks/useAuthGuard";
 
 const FEATURES = [
   {
@@ -36,6 +42,32 @@ const CATEGORIES = [
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, user } = useAuthStore();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // Redirect farmers, admins, drivers to their dashboards
+  useEffect(() => {
+    if (!mounted || !isAuthenticated || !user) return;
+    if (user.role !== "buyer") {
+      router.replace(dashboardFor(user.role));
+    }
+  }, [mounted, isAuthenticated, user, router]);
+
+  // While checking auth, show spinner for non-buyer roles
+  if (mounted && isAuthenticated && user && user.role !== "buyer") {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // For buyers and guests: show home page
+  const showRegisterCTAs = !isAuthenticated;
+
   return (
     <div className="min-h-screen flex flex-col bg-surface-warm">
       <TopHeader />
@@ -77,14 +109,16 @@ export default function HomePage() {
               >
                 🛒 تصفّح السوق الآن
               </Link>
-              <Link
-                href="/register?role=farmer"
-                className="inline-flex items-center gap-2 bg-white/10 text-white
-                           border border-white/30 font-semibold px-6 py-3 rounded-xl
-                           hover:bg-white/20 transition-colors backdrop-blur-sm text-base"
-              >
-                🌾 انضم كمزارع
-              </Link>
+              {showRegisterCTAs && (
+                <Link
+                  href="/register?role=farmer"
+                  className="inline-flex items-center gap-2 bg-white/10 text-white
+                             border border-white/30 font-semibold px-6 py-3 rounded-xl
+                             hover:bg-white/20 transition-colors backdrop-blur-sm text-base"
+                >
+                  🌾 انضم كمزارع
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -161,46 +195,48 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Dual CTA ─────────────────────────────────────────────────── */}
-      <section className="py-16 bg-surface-warm">
-        <div className="page-container">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
-            {/* Buyer card */}
-            <div className="card p-8 text-center hover:shadow-card-hover transition-all">
-              <div className="text-4xl mb-3">🛒</div>
-              <h3 className="text-xl font-bold text-stone-900 mb-2">أنت مستهلك؟</h3>
-              <p className="text-stone-500 text-sm mb-5">
-                اطلب الطازج مباشرة من المزارع بسعر عادل وتوصيل سريع
-              </p>
-              <Link
-                href="/register?role=buyer"
-                className="inline-flex items-center justify-center gap-2 w-full
-                           bg-forest-500 text-white font-bold py-3 px-6 rounded-xl
-                           hover:bg-forest-600 transition-colors shadow-sm"
-              >
-                تسجيل كمشتري
-              </Link>
-            </div>
+      {/* ── Dual CTA — shown only to guests ─────────────────────────── */}
+      {showRegisterCTAs && (
+        <section className="py-16 bg-surface-warm">
+          <div className="page-container">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+              {/* Buyer card */}
+              <div className="card p-8 text-center hover:shadow-card-hover transition-all">
+                <div className="text-4xl mb-3">🛒</div>
+                <h3 className="text-xl font-bold text-stone-900 mb-2">أنت مستهلك؟</h3>
+                <p className="text-stone-500 text-sm mb-5">
+                  اطلب الطازج مباشرة من المزارع بسعر عادل وتوصيل سريع
+                </p>
+                <Link
+                  href="/register?role=buyer"
+                  className="inline-flex items-center justify-center gap-2 w-full
+                             bg-forest-500 text-white font-bold py-3 px-6 rounded-xl
+                             hover:bg-forest-600 transition-colors shadow-sm"
+                >
+                  تسجيل كمشتري
+                </Link>
+              </div>
 
-            {/* Farmer card */}
-            <div className="card p-8 text-center border-2 border-forest-500 hover:shadow-card-hover transition-all">
-              <div className="text-4xl mb-3">🌾</div>
-              <h3 className="text-xl font-bold text-stone-900 mb-2">أنت مزارع؟</h3>
-              <p className="text-stone-500 text-sm mb-5">
-                بيع محاصيلك بسعر عادل وأدر طلباتك بسهولة من هاتفك
-              </p>
-              <Link
-                href="/register?role=farmer"
-                className="inline-flex items-center justify-center gap-2 w-full
-                           bg-white border-2 border-forest-500 text-forest-600
-                           font-bold py-3 px-6 rounded-xl hover:bg-forest-50 transition-colors"
-              >
-                تسجيل كمزارع
-              </Link>
+              {/* Farmer card */}
+              <div className="card p-8 text-center border-2 border-forest-500 hover:shadow-card-hover transition-all">
+                <div className="text-4xl mb-3">🌾</div>
+                <h3 className="text-xl font-bold text-stone-900 mb-2">أنت مزارع؟</h3>
+                <p className="text-stone-500 text-sm mb-5">
+                  بيع محاصيلك بسعر عادل وأدر طلباتك بسهولة من هاتفك
+                </p>
+                <Link
+                  href="/register?role=farmer"
+                  className="inline-flex items-center justify-center gap-2 w-full
+                             bg-white border-2 border-forest-500 text-forest-600
+                             font-bold py-3 px-6 rounded-xl hover:bg-forest-50 transition-colors"
+                >
+                  تسجيل كمزارع
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Trust strip ──────────────────────────────────────────────── */}
       <section className="bg-forest-900 py-8">

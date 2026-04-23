@@ -9,6 +9,7 @@ import { z } from "zod";
 import toast from "react-hot-toast";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { useGuestOnly } from "@/hooks/useAuthGuard";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -39,6 +40,14 @@ function RegisterPageContent() {
   const defaultRole = (searchParams.get("role") as "farmer" | "buyer") || "buyer";
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to dashboard if already logged in
+  const { mounted, isAuthenticated } = useGuestOnly();
+  if (!mounted || isAuthenticated) {
+    return <div className="min-h-screen bg-surface-warm flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
+    </div>;
+  }
 
   const {
     register,

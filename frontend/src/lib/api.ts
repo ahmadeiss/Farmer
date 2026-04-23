@@ -4,6 +4,7 @@
  * All API calls go through this client.
  */
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/store/authStore";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -68,10 +69,8 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - clear tokens and redirect to login
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user");
+        // Refresh failed — clear ALL auth state via the store (clears persisted hasaad-auth too)
+        useAuthStore.getState().logout();
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
@@ -166,6 +165,21 @@ export const inventoryApi = {
   addStock: (productId: number, data: object) =>
     apiClient.post(`/inventory/products/${productId}/add-stock/`, data),
   getLowStock: () => apiClient.get("/inventory/low-stock/"),
+};
+
+// ── Web Push API ──────────────────────────────────────────────────────────────
+export const pushApi = {
+  /** Get the VAPID public key from the server */
+  getVapidPublicKey: (): Promise<{ vapid_public_key: string }> =>
+    apiClient.get("/notifications/push/vapid-public-key/").then((r) => r.data),
+
+  /** Register a push subscription with the backend */
+  subscribe: (subscription: PushSubscriptionJSON): Promise<{ subscribed: boolean; created: boolean }> =>
+    apiClient.post("/notifications/push/subscribe/", subscription).then((r) => r.data),
+
+  /** Remove a push subscription from the backend */
+  unsubscribe: (endpoint: string): Promise<{ unsubscribed: boolean }> =>
+    apiClient.post("/notifications/push/unsubscribe/", { endpoint }).then((r) => r.data),
 };
 
 export const notificationsApi = {

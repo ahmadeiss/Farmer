@@ -10,7 +10,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import EmptyState from "@/components/ui/EmptyState";
 import Badge from "@/components/ui/Badge";
 import { TableRowSkeleton } from "@/components/ui/Skeleton";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import type { PaginatedResponse, ProductList } from "@/types";
 
 export default function AdminProductsPage() {

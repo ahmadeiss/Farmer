@@ -42,6 +42,10 @@ django-cloudinary-storage==0.3.0
 # QR Code
 qrcode==7.4.2
 
+# Web Push Notifications (VAPID)
+pywebpush==2.0.0
+pyopenssl==26.0.0
+
 # Analytics
 pandas==2.2.3
 

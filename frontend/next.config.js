@@ -1,5 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        // Service Worker must be served without cache and with full scope
+        source: "/sw.js",
+        headers: [
+          { key: "Service-Worker-Allowed", value: "/" },
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript" },
+        ],
+      },
+    ];
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import TopHeader from "./TopHeader";
 import { FarmerBottomNav, AdminBottomNav } from "./MobileBottomNav";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 const FARMER_NAV = [
   { href: "/farmer/dashboard", label: "الرئيسية", icon: "◉" },
@@ -36,6 +37,21 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
   const nav = role === "farmer" ? FARMER_NAV : ADMIN_NAV;
   const BottomNav = role === "farmer" ? FarmerBottomNav : AdminBottomNav;
   const roleLabel = role === "farmer" ? "المزارع" : "المشرف";
+
+  // ── Auth Guard ─────────────────────────────────────────────────────────────
+  const { isReady } = useAuthGuard(role);
+
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-stone-400">جارٍ التحقق...</p>
+        </div>
+      </div>
+    );
+  }
+  // ───────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-surface-warm flex flex-col">

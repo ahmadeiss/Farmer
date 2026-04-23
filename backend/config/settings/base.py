@@ -190,3 +190,11 @@ OTP_PROVIDER = env("OTP_PROVIDER", default="mock")
 TRANSCRIPTION_SERVICE = env("TRANSCRIPTION_SERVICE", default="stub")
 QR_CODE_BASE_URL = env("QR_CODE_BASE_URL", default="http://localhost:8000/api/v1/orders/confirm-qr")
 ANALYTICS_CACHE_TIMEOUT_SECONDS = env.int("ANALYTICS_CACHE_TIMEOUT_SECONDS", default=300)
+
+# ---- Web Push Notifications (VAPID) ----
+# Generate keys once with: python manage.py generate_vapid_keys
+# Then add them to your .env file.
+VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY", default="").replace("\\n", "\n")
+VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY", default="")
+VAPID_ADMIN_EMAIL = env("VAPID_ADMIN_EMAIL", default="admin@hasaad.ps")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")

@@ -9,6 +9,7 @@ import { notificationsApi, authApi, cartApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import type { Notification, Cart } from "@/types";
+import { dashboardFor } from "@/hooks/useAuthGuard";
 
 interface TopHeaderProps {
   className?: string;
@@ -19,13 +20,18 @@ export default function TopHeader({ className }: TopHeaderProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const [bellOpen, setBellOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
         setBellOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -198,12 +204,11 @@ export default function TopHeader({ className }: TopHeaderProps) {
                     )}
                   </button>
 
-                  {/* Dropdown */}
+                  {/* Notifications Dropdown */}
                   {bellOpen && (
                     <div className="absolute end-0 top-full mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:w-80
                                     bg-white rounded-2xl shadow-xl border border-surface-border z-50
                                     animate-in fade-in slide-in-from-top-2 duration-150">
-                      {/* Header */}
                       <div className="flex items-center justify-between px-4 py-3
                                       border-b border-surface-border">
                         <p className="font-bold text-stone-900 text-sm">الإشعارات</p>
@@ -217,8 +222,6 @@ export default function TopHeader({ className }: TopHeaderProps) {
                           </button>
                         )}
                       </div>
-
-                      {/* List */}
                       <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-8 text-center">
@@ -257,8 +260,6 @@ export default function TopHeader({ className }: TopHeaderProps) {
                           ))
                         )}
                       </div>
-
-                      {/* Footer */}
                       <div className="px-4 py-3 border-t border-surface-border">
                         <Link
                           href="/notifications"
@@ -273,37 +274,97 @@ export default function TopHeader({ className }: TopHeaderProps) {
                   )}
                 </div>
 
-                {/* User pill */}
-                <div className="hidden sm:flex items-center gap-2 mr-1">
-                  <div className="w-7 h-7 rounded-full bg-forest-100 flex items-center
-                                  justify-center text-forest-700 font-bold text-xs">
-                    {user?.full_name?.[0] ?? "؟"}
-                  </div>
-                  <span className="text-sm font-medium text-stone-700 max-w-[100px] truncate">
-                    {user?.full_name?.split(" ")[0]}
-                  </span>
-                </div>
+                {/* ── User avatar + menu (visible on ALL screen sizes) ─── */}
+                <div ref={userMenuRef} className="relative mr-0.5">
+                  <button
+                    onClick={() => setUserMenuOpen((o) => !o)}
+                    aria-label="قائمة المستخدم"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors",
+                      "hover:bg-stone-100 active:bg-stone-200"
+                    )}
+                  >
+                    {/* Avatar circle */}
+                    <div className="w-8 h-8 rounded-full bg-forest-100 flex items-center
+                                    justify-center text-forest-700 font-bold text-sm shrink-0">
+                      {user?.full_name?.[0] ?? "؟"}
+                    </div>
+                    {/* Name – visible only on sm+ */}
+                    <span className="hidden sm:block text-sm font-medium text-stone-700 max-w-[100px] truncate">
+                      {user?.full_name?.split(" ")[0]}
+                    </span>
+                    {/* Chevron – desktop only */}
+                    <svg className="hidden sm:block w-3.5 h-3.5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg
-                             text-xs font-semibold text-stone-500 hover:bg-stone-100
-                             hover:text-stone-700 transition-colors"
-                >
-                  خروج
-                </button>
+                  {/* User dropdown menu */}
+                  {userMenuOpen && (
+                    <div className="absolute end-0 top-full mt-2 w-52
+                                    bg-white rounded-2xl shadow-xl border border-surface-border z-50
+                                    animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
+                      {/* User info */}
+                      <div className="px-4 py-3 border-b border-surface-border bg-stone-50">
+                        <p className="text-sm font-bold text-stone-900 truncate">{user?.full_name}</p>
+                        <p className="text-xs text-stone-400 mt-0.5">
+                          {user?.role === "farmer" ? "🌾 مزارع" :
+                           user?.role === "admin"  ? "🛠 مشرف" :
+                           user?.role === "driver" ? "🚚 سائق" : "🛒 مشتري"}
+                        </p>
+                      </div>
+
+                      {/* Dashboard link */}
+                      <Link
+                        href={dashboardFor(user?.role ?? "buyer")}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-3 text-sm text-stone-700
+                                   hover:bg-stone-50 transition-colors"
+                      >
+                        <span className="text-base">🏠</span> لوحة التحكم
+                      </Link>
+
+                      {/* Profile link */}
+                      <Link
+                        href={user?.role === "farmer" ? "/farmer/profile" : "/profile"}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-3 text-sm text-stone-700
+                                   hover:bg-stone-50 transition-colors"
+                      >
+                        <span className="text-base">👤</span> حسابي
+                      </Link>
+
+                      {/* Divider */}
+                      <div className="h-px bg-surface-border mx-3" />
+
+                      {/* Logout */}
+                      <button
+                        onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm
+                                   text-danger-600 hover:bg-danger-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        تسجيل الخروج
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Link href="/login"
                   className="px-3 py-1.5 text-sm font-medium text-stone-600
-                             hover:text-stone-900 transition-colors">
+                             hover:text-stone-900 transition-colors rounded-lg hover:bg-stone-100">
                   دخول
                 </Link>
                 <Link href="/register"
                   className="px-4 py-1.5 text-sm font-semibold bg-forest-500 text-white
                              rounded-lg hover:bg-forest-600 transition-colors shadow-sm">
-                  إنشاء حساب
+                  <span className="hidden sm:inline">إنشاء حساب</span>
+                  <span className="sm:hidden">تسجيل</span>
                 </Link>
               </div>
             )}
