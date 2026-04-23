@@ -2,8 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { ordersApi } from "@/lib/api";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { ordersApi, extractApiError } from "@/lib/api";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import TopHeader from "@/components/layout/TopHeader";
 import { BuyerBottomNav } from "@/components/layout/MobileBottomNav";
@@ -17,11 +19,28 @@ import type { Order, OrderStatus } from "@/types";
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const qc = useQueryClient();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const { data: order, isLoading } = useQuery<Order>({
     queryKey: ["my-order", id],
     queryFn: () => ordersApi.getMyOrder(Number(id)).then((r) => r.data),
-    refetchInterval: 30_000, // auto-refresh every 30s to catch status updates
+    refetchInterval: 30_000,
+  });
+
+  const { mutate: confirmReceipt, isPending: isConfirming } = useMutation({
+    mutationFn: () => ordersApi.confirmReceipt(Number(id)),
+    onSuccess: () => {
+      toast.success("🎉 تم تأكيد الاستلام بنجاح!");
+      setShowConfirmDialog(false);
+      qc.invalidateQueries({ queryKey: ["my-order", id] });
+      qc.invalidateQueries({ queryKey: ["my-orders"] });
+      setTimeout(() => router.push(`/orders/${id}/review`), 1500);
+    },
+    onError: (err) => {
+      toast.error(extractApiError(err, "تعذّر تأكيد الاستلام. حاول مرة أخرى."));
+      setShowConfirmDialog(false);
+    },
   });
 
   if (isLoading) return <LoadingSkeleton />;
@@ -29,6 +48,8 @@ export default function OrderDetailPage() {
 
   const isCancelled = order.status === "cancelled";
   const isDelivered = order.status === "delivered";
+  const canConfirmManually =
+    order.status === "out_for_delivery" || order.status === "ready_for_pickup";
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-warm">
@@ -140,19 +161,61 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        {/* ── Delivery instructions (buyer scans farmer's QR slip) ──── */}
-        {(order.status === "out_for_delivery" || order.status === "ready_for_pickup") && (
-          <div className="card p-5 bg-forest-50 border border-forest-100">
-            <h2 className="section-title text-forest-800 mb-2">📷 تأكيد الاستلام</h2>
-            <p className="text-sm text-forest-700 leading-relaxed mb-3">
-              عند وصول الطلب، سيكون مع السائق قسيمة تحتوي رمز QR.
-              افتح كاميرا هاتفك وامسح الرمز ليتم تأكيد الاستلام تلقائياً.
+        {/* ── Confirm receipt section ───────────────────────────────── */}
+        {canConfirmManually && (
+          <div className="card p-5 bg-forest-50 border border-forest-200">
+            <h2 className="section-title text-forest-800 mb-2">📦 تأكيد الاستلام</h2>
+            <p className="text-sm text-forest-700 leading-relaxed mb-4">
+              هل استلمت طلبك؟ اضغط الزر أدناه لتأكيد الاستلام وإخطار المزارع.
             </p>
-            <ul className="text-xs text-forest-600 space-y-1.5 leading-relaxed ps-4 list-disc">
-              <li>ستفتح صفحة تؤكّد التسليم مباشرة بعد المسح.</li>
-              <li>تأكد من تسجيل دخولك بنفس الحساب الذي طلبت منه.</li>
-              <li>في حال تعذّر المسح، يمكنك تزويد السائق بالرمز الاحتياطي المكتوب على القسيمة.</li>
-            </ul>
+            <Button
+              fullWidth
+              onClick={() => setShowConfirmDialog(true)}
+              className="bg-forest-600 hover:bg-forest-700 text-white"
+            >
+              ✅ تأكيد استلام الطلب
+            </Button>
+            <p className="text-xs text-forest-500 text-center mt-2">
+              يمكنك أيضاً مسح رمز QR من قسيمة السائق لتأكيد أسرع.
+            </p>
+          </div>
+        )}
+
+        {/* ── Confirm receipt dialog ────────────────────────────────── */}
+        {showConfirmDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+               style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-forest-100
+                                flex items-center justify-center text-3xl mb-3">
+                  📦
+                </div>
+                <h3 className="text-lg font-bold text-stone-900">تأكيد الاستلام</h3>
+                <p className="text-sm text-stone-500 mt-1 leading-relaxed">
+                  هل أنت متأكد من استلام طلب #{order.id} من {order.farmer_name}؟
+                  سيتم إخطار المزارع فوراً وإغلاق الطلب.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={() => setShowConfirmDialog(false)}
+                  disabled={isConfirming}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={() => confirmReceipt()}
+                  disabled={isConfirming}
+                  className="bg-forest-600 hover:bg-forest-700 text-white"
+                >
+                  {isConfirming ? "جارٍ التأكيد…" : "نعم، استلمت"}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 

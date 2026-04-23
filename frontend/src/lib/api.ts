@@ -176,6 +176,9 @@ export const ordersApi = {
     apiClient.patch(`/orders/farmer-orders/${id}/status/`, { status }),
   assignDelivery: (id: number, data: object) => apiClient.post(`/logistics/orders/${id}/assign/`, data),
   confirmQr: (token: string) => apiClient.post(`/orders/confirm-qr/${token}/`),
+  /** Manual receipt confirmation by buyer (fallback when QR scan fails). */
+  confirmReceipt: (orderId: number) =>
+    apiClient.post(`/orders/my-orders/${orderId}/confirm-receipt/`),
   submitReview: (data: object) => apiClient.post("/orders/reviews/", data),
 };
 
