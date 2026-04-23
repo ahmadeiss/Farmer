@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ordersApi } from "@/lib/api";
+import { ordersApi, extractApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import TopHeader from "@/components/layout/TopHeader";
 import Footer from "@/components/layout/Footer";
@@ -16,19 +16,28 @@ export default function OrderConfirmPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
 
+  // Wait for Zustand to hydrate from localStorage before acting.
+  // Without this guard the initial render sees isAuthenticated=false
+  // and incorrectly shows "needs_login" before the persisted state loads.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const [phase, setPhase] = useState<Phase>("checking");
   const [message, setMessage] = useState<string>("");
   const [orderId, setOrderId] = useState<number | null>(null);
+  // Prevent double-confirm if the effect runs more than once
+  const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!mounted || !token || confirmed) return;
 
     if (!isAuthenticated || !user) {
       setPhase("needs_login");
       return;
     }
 
-    // Only the buyer may confirm via scan (admins can too, but typical path is buyer)
+    // Authenticated — fire the confirm request exactly once
+    setConfirmed(true);
     setPhase("confirming");
     ordersApi
       .confirmQr(token)
@@ -37,17 +46,16 @@ export default function OrderConfirmPage() {
         setOrderId(data.order_id ?? null);
         setMessage(data.message ?? "تم تأكيد التسليم بنجاح.");
         setPhase("success");
-        // Auto-navigate to the order page after a short delay
         if (data.order_id) {
           setTimeout(() => router.push(`/orders/${data.order_id}`), 2500);
         }
       })
       .catch((err: unknown) => {
-        const e = (err as { response?: { data?: { error?: string } } })?.response?.data;
-        setMessage(e?.error || "تعذّر تأكيد التسليم. حاول مرة أخرى.");
+        setMessage(extractApiError(err, "تعذّر تأكيد التسليم. حاول مرة أخرى."));
         setPhase("error");
+        setConfirmed(false); // allow retry
       });
-  }, [token, isAuthenticated, user, router]);
+  }, [mounted, token, isAuthenticated, user, router, confirmed]);
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-warm">

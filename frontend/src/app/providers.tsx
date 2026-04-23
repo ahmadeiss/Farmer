@@ -4,6 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "react-hot-toast";
 import PushNotificationManager from "@/components/PushNotificationManager";
+import { useNotificationSocket } from "@/hooks/useNotificationSocket";
+
+/** Inner component so the hook can access the QueryClient from context. */
+function NotificationSocketBridge() {
+  useNotificationSocket();
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,6 +35,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      {/* Real-time WebSocket: receives push notifications and refreshes badge count */}
+      <NotificationSocketBridge />
       {/* Web Push Notification permission banner + silent auto-subscribe */}
       <PushNotificationManager />
       <Toaster
