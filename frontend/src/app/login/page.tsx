@@ -35,19 +35,22 @@ function LoginPageContent() {
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect to dashboard if already logged in
-  const { mounted, isAuthenticated } = useGuestOnly();
-  if (!mounted || isAuthenticated) {
-    return <div className="min-h-screen bg-surface-warm flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
-    </div>;
-  }
-
+  // ALL hooks must be called unconditionally before any early return (Rules of Hooks)
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  // Redirect to dashboard if already logged in
+  const { mounted, isAuthenticated } = useGuestOnly();
+  if (!mounted || isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);

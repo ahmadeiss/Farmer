@@ -37,8 +37,6 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "حصاد الذكي";
   const options = {
     body: payload.body || "",
-    icon: payload.icon || "/icons/icon-192.png",
-    badge: payload.badge || "/icons/icon-72.png",
     tag: payload.tag || "hasaad-notification",
     // Replace older notification with the same tag instead of stacking
     renotify: false,
