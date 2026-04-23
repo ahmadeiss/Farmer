@@ -2,9 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { QRCodeSVG } from "qrcode.react";
 import { ordersApi, extractApiError } from "@/lib/api";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import TopHeader from "@/components/layout/TopHeader";
@@ -21,6 +22,8 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [appOrigin, setAppOrigin] = useState("");
+  useEffect(() => { setAppOrigin(window.location.origin); }, []);
 
   const { data: order, isLoading } = useQuery<Order>({
     queryKey: ["my-order", id],
@@ -163,21 +166,50 @@ export default function OrderDetailPage() {
 
         {/* ── Confirm receipt section ───────────────────────────────── */}
         {canConfirmManually && (
-          <div className="card p-5 bg-forest-50 border border-forest-200">
-            <h2 className="section-title text-forest-800 mb-2">📦 تأكيد الاستلام</h2>
-            <p className="text-sm text-forest-700 leading-relaxed mb-4">
-              هل استلمت طلبك؟ اضغط الزر أدناه لتأكيد الاستلام وإخطار المزارع.
-            </p>
-            <Button
-              fullWidth
-              onClick={() => setShowConfirmDialog(true)}
-              className="bg-forest-600 hover:bg-forest-700 text-white"
-            >
-              ✅ تأكيد استلام الطلب
-            </Button>
-            <p className="text-xs text-forest-500 text-center mt-2">
-              يمكنك أيضاً مسح رمز QR من قسيمة السائق لتأكيد أسرع.
-            </p>
+          <div className="card p-5 bg-forest-50 border border-forest-200 space-y-5">
+            <h2 className="section-title text-forest-800">📦 تأكيد الاستلام</h2>
+
+            {/* QR Code — buyer shows this to driver/farmer, or scans from them */}
+            {appOrigin && order.qr_token && (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-sm text-forest-700 text-center leading-relaxed">
+                  امسح هذا الرمز بكاميرا هاتفك، أو اعرضه للشوفير/المزارع ليمسحه.
+                </p>
+                <div className="bg-white p-3 rounded-xl shadow-sm border border-forest-100 inline-block">
+                  <QRCodeSVG
+                    value={`${appOrigin}/orders/confirm/${order.qr_token}`}
+                    size={160}
+                    level="M"
+                    includeMargin={false}
+                    className="rounded"
+                  />
+                </div>
+                <p className="text-xs text-stone-400 text-center">
+                  رمز الطلب #{order.id}
+                </p>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-forest-100" />
+              <span className="text-xs text-forest-400 font-medium">أو</span>
+              <div className="flex-1 h-px bg-forest-100" />
+            </div>
+
+            {/* Manual confirm button */}
+            <div>
+              <Button
+                fullWidth
+                onClick={() => setShowConfirmDialog(true)}
+                className="bg-forest-600 hover:bg-forest-700 text-white"
+              >
+                ✅ تأكيد استلام الطلب يدوياً
+              </Button>
+              <p className="text-xs text-forest-500 text-center mt-2">
+                اضغط هنا لتأكيد الاستلام مباشرةً دون مسح الرمز.
+              </p>
+            </div>
           </div>
         )}
 

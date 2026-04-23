@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
 type Role = "farmer" | "buyer" | "admin" | "driver";
@@ -24,20 +24,33 @@ export function dashboardFor(role: string): string {
 }
 
 /**
- * Redirect authenticated users to their dashboard.
+ * Redirect authenticated users to their dashboard (or ?next= if present).
  * Use this in login / register / home pages.
+ *
+ * When an authenticated user lands on /login?next=/orders/confirm/TOKEN
+ * (e.g. after scanning a QR code while not yet logged in, then logging in
+ * and being bounced back), this hook sends them to the ?next= path instead
+ * of their generic dashboard so the QR confirmation completes automatically.
  */
 export function useGuestOnly() {
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted || !isAuthenticated || !user) return;
-    router.replace(dashboardFor(user.role));
-  }, [mounted, isAuthenticated, user, router]);
+
+    // Honor ?next= (safe relative paths only) so QR-scan → login → confirm works
+    const next = searchParams.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      router.replace(next);
+    } else {
+      router.replace(dashboardFor(user.role));
+    }
+  }, [mounted, isAuthenticated, user, router, searchParams]);
 
   // True once hydration is done AND the user is a guest (or being redirected)
   const isGuest = mounted && !isAuthenticated;
