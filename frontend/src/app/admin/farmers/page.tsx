@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -17,6 +17,14 @@ import type { FarmerProfile, PaginatedResponse, User } from "@/types";
 type Tab = "all" | "pending";
 
 export default function AdminFarmersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminFarmersContent />
+    </Suspense>
+  );
+}
+
+function AdminFarmersContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>((searchParams.get("tab") as Tab) || "all");
   const [search, setSearch] = useState("");
