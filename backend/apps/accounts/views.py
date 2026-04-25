@@ -251,6 +251,13 @@ def admin_approve_farmer_view(request, user_id):
     farmer.is_verified = True
     farmer.save(update_fields=["is_active", "is_verified", "updated_at"])
 
+    # Ensure FarmerProfile exists so the farmer appears in the admin "all" list
+    try:
+        from apps.farmers.models import FarmerProfile
+        FarmerProfile.objects.get_or_create(user=farmer)
+    except Exception as exc:
+        logger.warning(f"Could not create FarmerProfile for farmer #{farmer.id}: {exc}")
+
     # Notify the farmer their account has been approved
     try:
         from apps.notifications.services import NotificationService
@@ -259,7 +266,7 @@ def admin_approve_farmer_view(request, user_id):
             title="🎉 تم تفعيل حسابك!",
             body="تهانينا! تمت الموافقة على حسابك كمزارع في منصة حصاد. يمكنك الآن تسجيل الدخول وإضافة منتجاتك.",
             notification_type="general",
-            data={"action": "farmer_approved"},
+            data={"action": "farmer_approved", "recipient_role": "farmer"},
         )
     except Exception as exc:
         logger.warning(f"Could not notify farmer #{farmer.id} of approval: {exc}")

@@ -19,17 +19,37 @@ from .models import Notification, PushSubscription
 
 logger = logging.getLogger(__name__)
 
-# Notification type → frontend URL mapping
+# Notification type → frontend URL mapping (uses recipient_role in data when available)
+def _url_for_order_status(data: dict) -> str:
+    order_id = data.get("order_id")
+    role = data.get("recipient_role", "buyer")
+    if role == "farmer":
+        return f"/farmer/orders/{order_id}" if order_id else "/farmer/orders"
+    return f"/orders/{order_id}" if order_id else "/orders"
+
+
+def _url_for_general(data: dict) -> str:
+    action = data.get("action", "")
+    if data.get("assignment_id"):
+        return "/driver/dashboard"
+    if action == "farmer_approval":
+        return "/admin/products?tab=pending" if data.get("product_id") else "/admin/farmers?tab=pending"
+    if action == "product_approval":
+        return "/admin/products?tab=pending"
+    if action in ("product_approved", "product_rejected"):
+        return "/farmer/products"
+    if action == "farmer_approved":
+        return "/farmer/dashboard"
+    return "/"
+
+
 _URL_MAP = {
     "new_order":    lambda data: f"/farmer/orders/{data['order_id']}" if data.get("order_id") else "/farmer/orders",
-    "order_status": lambda data: f"/orders/{data['order_id']}" if data.get("order_id") else "/orders",
+    "order_status": _url_for_order_status,
     "low_stock":    lambda data: "/farmer/inventory",
     "payment":      lambda data: "/farmer/wallet",
     "review":       lambda data: f"/orders/{data['order_id']}/review" if data.get("order_id") else "/farmer/orders",
-    "general":      lambda data: (
-        "/driver/dashboard" if data.get("assignment_id") else
-        "/admin/farmers?tab=pending" if data.get("action") == "farmer_approval" else "/"
-    ),
+    "general":      _url_for_general,
 }
 
 

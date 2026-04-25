@@ -96,7 +96,7 @@ def checkout_view(request):
                 title="🛒 طلب جديد!",
                 body=f"تلقيت طلباً جديداً من {order.buyer.full_name} بقيمة {order.total} ₪",
                 notification_type="new_order",
-                data={"order_id": order.id, "farmer_order_id": order.id},
+                data={"order_id": order.id, "recipient_role": "farmer"},
             )
         except Exception as exc:
             logger.warning(f"Notification failed for order #{order.id}: {exc}")
@@ -191,7 +191,7 @@ def update_order_status_view(request, order_id):
                 title=title,
                 body=body,
                 notification_type="order_status",
-                data={"order_id": order.id, "status": new_status},
+                data={"order_id": order.id, "status": new_status, "recipient_role": "buyer"},
             )
         except Exception as exc:
             logger.warning(f"Status notification failed for order #{order.id}: {exc}")
@@ -247,7 +247,7 @@ def _notify_farmer_delivered(order: Order):
             title="🎉 تم تأكيد التسليم!",
             body=f"أكّد {order.buyer.full_name} استلام طلبه #{order.id} بنجاح.",
             notification_type="order_status",
-            data={"order_id": order.id},
+            data={"order_id": order.id, "recipient_role": "farmer"},
         )
     except Exception as exc:
         logger.warning("Farmer delivery notification failed for order #%s: %s", order.id, exc)

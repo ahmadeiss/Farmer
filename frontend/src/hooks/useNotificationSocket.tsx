@@ -19,29 +19,51 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import type { UserRole } from "@/types";
 
-/** Role-aware notification URL routing */
+/** Role-aware notification URL routing — uses recipient_role from data when available */
 function getNotificationUrl(type: string, data: Record<string, unknown>, role?: UserRole): string {
+  // Prefer explicit recipient_role stored in notification data; fall back to current user's role
+  const recipientRole = (data.recipient_role as UserRole | undefined) ?? role;
+
   switch (type) {
     case "new_order":
-      // Farmers go to their specific order
+      // Always sent to the farmer
       if (data.order_id) return `/farmer/orders/${data.order_id}`;
       return "/farmer/orders";
+
     case "order_status":
-      // Buyers go to their order detail
-      if (data.order_id) return `/orders/${data.order_id}`;
-      return "/orders";
+      // Sent to buyer for status updates, sent to farmer for delivery confirmation
+      if (recipientRole === "farmer") {
+        return data.order_id ? `/farmer/orders/${data.order_id}` : "/farmer/orders";
+      }
+      return data.order_id ? `/orders/${data.order_id}` : "/orders";
+
     case "low_stock":
       return "/farmer/inventory";
+
     case "payment":
       return "/farmer/wallet";
+
     case "review":
-      if (data.order_id) return `/orders/${data.order_id}/review`;
-      return role === "farmer" ? "/farmer/orders" : "/orders";
-    case "general":
+      if (data.order_id) {
+        return recipientRole === "farmer"
+          ? `/farmer/orders/${data.order_id}`
+          : `/orders/${data.order_id}/review`;
+      }
+      return recipientRole === "farmer" ? "/farmer/orders" : "/orders";
+
+    case "general": {
       if (data.assignment_id) return "/driver/dashboard";
+      // Admin receives product or farmer approval notifications
+      if (data.action === "product_approval") return "/admin/products?tab=pending";
       if (data.action === "farmer_approval") return "/admin/farmers?tab=pending";
-      if (data.action === "farmer_approved") return "/login";
+      // Farmer receives product approved/rejected
+      if (data.action === "product_approved" || data.action === "product_rejected")
+        return "/farmer/products";
+      // Farmer receives account approval — go to dashboard (already logged in)
+      if (data.action === "farmer_approved") return "/farmer/dashboard";
       return "/";
+    }
+
     default:
       return "/notifications";
   }

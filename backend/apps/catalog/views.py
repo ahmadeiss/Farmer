@@ -128,7 +128,7 @@ class FarmerProductViewSet(viewsets.ModelViewSet):
                         title="🌱 منتج جديد يحتاج موافقة",
                         body=f"أضاف {farmer.full_name} منتج «{product.title}» ويحتاج موافقتك.",
                         notification_type="general",
-                        data={"product_id": product.id, "action": "product_approval"},
+                        data={"product_id": product.id, "action": "product_approval", "recipient_role": "admin"},
                     )
             except Exception:
                 pass
@@ -191,7 +191,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 title="✅ تمت الموافقة على منتجك",
                 body=f"تم اعتماد منتجك «{product.title}» وأصبح مرئياً في السوق.",
                 notification_type="general",
-                data={"product_id": product.id, "action": "product_approved"},
+                data={"product_id": product.id, "action": "product_approved", "recipient_role": "farmer"},
             )
         except Exception:
             pass
@@ -212,7 +212,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
                 title="❌ لم تتم الموافقة على منتجك",
                 body=f"لم يتم قبول منتج «{product.title}»: {reason}",
                 notification_type="general",
-                data={"product_id": product.id, "action": "product_rejected"},
+                data={"product_id": product.id, "action": "product_rejected", "recipient_role": "farmer"},
             )
         except Exception:
             pass
