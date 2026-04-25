@@ -36,6 +36,7 @@ export default function BuyerProfilePage() {
 
   const [location, setLocation] = useState<LocationValue>({
     governorate: "",
+    town: "",
     address: "",
     latitude: null,
     longitude: null,
@@ -55,6 +56,7 @@ export default function BuyerProfilePage() {
     if (profile) {
       setLocation({
         governorate: findGovernorate(profile.default_address)?.code ?? "",
+        town: "",
         address: profile.default_address ?? "",
         latitude: profile.latitude ? +profile.latitude : null,
         longitude: profile.longitude ? +profile.longitude : null,

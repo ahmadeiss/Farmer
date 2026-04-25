@@ -43,6 +43,7 @@ export default function CheckoutPage() {
 
   const [location, setLocation] = useState<LocationValue>({
     governorate: "",
+    town: "",
     address: "",
     latitude: null,
     longitude: null,
@@ -58,6 +59,7 @@ export default function CheckoutPage() {
       reset({ notes: buyerProfile.notes ?? "" });
       setLocation({
         governorate: findGovernorate(buyerProfile.default_address)?.code ?? "",
+        town: "",
         address: buyerProfile.default_address ?? "",
         latitude: buyerProfile.latitude ? +buyerProfile.latitude : null,
         longitude: buyerProfile.longitude ? +buyerProfile.longitude : null,
@@ -81,8 +83,8 @@ export default function CheckoutPage() {
   });
 
   const onSubmit = (data: FormData) => {
-    if (!location.address || location.address.trim().length < 15) {
-      toast.error("يرجى كتابة عنوان توصيل تفصيلي (15 حرف على الأقل)");
+    if (!location.governorate) {
+      toast.error("يرجى اختيار المحافظة أولاً");
       return;
     }
     const govName = GOVERNORATE_BY_CODE[location.governorate]?.name_ar ?? "";
@@ -142,8 +144,7 @@ export default function CheckoutPage() {
                 value={location}
                 onChange={setLocation}
                 label="موقع التوصيل"
-                helpText="اضبط موقعك بدقة ليصل السائق بسرعة، وتُرتَّب المزارع الأقرب إليك أولاً."
-                addressRequired
+                helpText="اختر المحافظة والقرية، أو اضغط 'اكتشف موقعي' لتحديد موقعك تلقائياً."
               />
 
               <div>

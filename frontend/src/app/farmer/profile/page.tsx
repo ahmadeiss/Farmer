@@ -44,6 +44,7 @@ export default function FarmerProfilePage() {
 
   const [location, setLocation] = useState<LocationValue>({
     governorate: "",
+    town: "",
     address: "",
     latitude: null,
     longitude: null,
