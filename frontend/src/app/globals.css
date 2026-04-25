@@ -518,6 +518,20 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   HASAAD LOGO ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+  33%       { transform: translateY(-12px) rotate(1.5deg) scale(1.02); }
+  66%       { transform: translateY(6px) rotate(-1deg) scale(0.98); }
+}
+
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(26,157,101,0.3)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(26,157,101,0.7)) drop-shadow(0 0 40px rgba(212,119,26,0.2)); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PRINT
    ═══════════════════════════════════════════════════════════════════ */
 @media print {

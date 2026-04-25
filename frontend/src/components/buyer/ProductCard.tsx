@@ -7,7 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartApi } from "@/lib/api";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, HASAAD_LOGO_URL } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import PriceDisplay from "@/components/ui/PriceDisplay";
 import { formatDistanceKm } from "@/lib/palestine";
@@ -28,6 +28,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const maxQty = Math.max(1, Number(product.quantity_available));
   const [qty, setQty] = useState(1);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const isPlaceholder = !product.image;
 
   const decrement = () => setQty((q) => Math.max(1, q - 1));
   const increment = () => setQty((q) => Math.min(maxQty, q + 1));
@@ -100,14 +101,47 @@ export default function ProductCard({ product }: ProductCardProps) {
         {!isImageLoaded && (
           <div className="absolute inset-0 bg-stone-200 animate-pulse" />
         )}
-        <Image
-          src={getImageUrl(product.image)}
-          alt={product.title}
-          fill
-          className={`object-cover transition-all duration-500 group-hover:scale-110 ${outOfStock ? "opacity-60" : ""} ${isImageLoaded ? "opacity-100" : "opacity-0"}`}
-          onLoad={() => setIsImageLoaded(true)}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
+
+        {isPlaceholder ? (
+          /* ── Logo Placeholder ── */
+          <div
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-500
+              bg-gradient-to-br from-forest-50 via-white to-forest-100
+              ${isImageLoaded ? "opacity-100" : "opacity-0"}
+              ${outOfStock ? "opacity-60" : ""}`}
+          >
+            {/* Subtle radial glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,157,101,0.12)_0%,transparent_70%)]" />
+            {/* Decorative ring */}
+            <div className="relative flex items-center justify-center w-24 h-24 rounded-full
+                            bg-white/80 shadow-md border border-forest-100
+                            group-hover:scale-105 transition-transform duration-300">
+              <div className="absolute inset-0 rounded-full border-2 border-forest-200/50
+                              animate-[spin_12s_linear_infinite]"
+                   style={{ borderTopColor: "transparent", borderBottomColor: "transparent" }} />
+              <Image
+                src={HASAAD_LOGO_URL}
+                alt="حصاد"
+                width={56}
+                height={56}
+                className="object-contain w-14 h-14 drop-shadow-sm"
+                onLoad={() => setIsImageLoaded(true)}
+              />
+            </div>
+          </div>
+        ) : (
+          <Image
+            src={getImageUrl(product.image)}
+            alt={product.title}
+            fill
+            className={`object-cover transition-all duration-500 group-hover:scale-110
+              ${outOfStock ? "opacity-60" : ""}
+              ${isImageLoaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={() => setIsImageLoaded(true)}
+            onError={() => setIsImageLoaded(true)}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        )}
 
         {/* Out of Stock Overlay */}
         {outOfStock && (

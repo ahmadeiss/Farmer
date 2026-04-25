@@ -63,8 +63,11 @@ export function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + "...";
 }
 
+export const HASAAD_LOGO_URL =
+  "https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png";
+
 export function getImageUrl(path: string | null | undefined): string {
-  if (!path) return "/images/placeholder-product.svg";
+  if (!path) return HASAAD_LOGO_URL;
   if (path.startsWith("http")) return path;
   return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${path}`;
 }

@@ -100,7 +100,45 @@ export default function HomePage() {
         </div>
 
         <div className="relative page-container py-16 sm:py-20 lg:py-24">
-          <div className="max-w-2xl">
+
+          {/* ── Animated Logo — right side on desktop, top on mobile ── */}
+          <div className={`
+            absolute inset-y-0 start-0 sm:start-auto sm:end-0
+            flex items-center justify-center
+            w-full sm:w-auto pointer-events-none
+            transition-all duration-1000 delay-300
+            ${heroLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}
+          `}>
+            <div className="relative flex items-center justify-center opacity-20 sm:opacity-30 lg:opacity-40 sm:me-8 lg:me-16">
+              {/* Outer slow spinning ring */}
+              <div className="absolute w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 rounded-full
+                              border border-white/20
+                              animate-[spin_20s_linear_infinite]"
+                   style={{ borderTopColor: "rgba(255,255,255,0.5)", borderRightColor: "transparent",
+                            borderBottomColor: "rgba(255,255,255,0.3)", borderLeftColor: "transparent" }} />
+              {/* Inner counter-spin ring */}
+              <div className="absolute w-36 h-36 sm:w-48 sm:h-48 lg:w-60 lg:h-60 rounded-full
+                              border border-white/10
+                              animate-[spin_14s_linear_infinite_reverse]"
+                   style={{ borderTopColor: "transparent", borderRightColor: "rgba(212,119,26,0.6)",
+                            borderBottomColor: "transparent", borderLeftColor: "rgba(26,157,101,0.5)" }} />
+              {/* Glow */}
+              <div className="absolute w-32 h-32 sm:w-40 sm:h-40 lg:w-52 lg:h-52 rounded-full
+                              bg-forest-400/10 blur-2xl animate-pulse" />
+              {/* Logo image */}
+              <Image
+                src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+                alt="حصاد"
+                width={120}
+                height={120}
+                className="relative w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36 object-contain"
+                style={{ animation: "floatLogo 6s ease-in-out infinite, logoGlow 4s ease-in-out infinite" }}
+                priority
+              />
+            </div>
+          </div>
+
+          <div className="max-w-2xl relative z-10">
             {/* Tag */}
             <div className={`inline-flex items-center gap-2 bg-white/10 text-forest-100 px-4 py-1.5 rounded-full text-sm font-medium mb-6 backdrop-blur-sm transition-all duration-700 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
               <span className="relative flex h-2 w-2">

@@ -16,8 +16,22 @@ const CONTACT = [
 
 export default function Footer() {
   return (
-    <footer className="bg-stone-900 text-stone-400 mt-auto">
-      <div className="page-container py-12">
+    <footer className="relative bg-stone-900 text-stone-400 mt-auto overflow-hidden">
+
+      {/* ── Decorative logo watermark ── */}
+      <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.04]">
+        <Image
+          src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+          alt=""
+          width={320}
+          height={320}
+          aria-hidden="true"
+          className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
+          style={{ animation: "floatLogo 8s ease-in-out infinite" }}
+        />
+      </div>
+
+      <div className="relative page-container py-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           {/* Brand */}
           <div className="sm:col-span-1">
