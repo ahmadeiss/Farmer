@@ -28,17 +28,16 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
-  const searchParams = useSearchParams();
-  const role = searchParams.get("role") || "buyer";
-
   return (
     <Suspense fallback={<div className="min-h-screen bg-surface-warm" />}>
-      <RegisterPageContent role={role} />
+      <RegisterPageContent />
     </Suspense>
   );
 }
 
-function RegisterPageContent({ role }: { role: string }) {
+function RegisterPageContent() {
+  const searchParams = useSearchParams();
+  const role = searchParams.get("role") || "buyer";
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
