@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -81,11 +82,15 @@ function LoginPageContent() {
       {/* Left decorative panel – hidden on mobile */}
       <div className="hidden lg:flex lg:w-2/5 bg-forest-800 flex-col justify-between p-10">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <span className="text-2xl">🌾</span>
-          </div>
-          <span className="text-white font-extrabold text-lg">حصاد الذكي</span>
-        </Link>
+            <Image
+              src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+              alt="حصاد"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-xl object-contain bg-white/10"
+            />
+            <span className="text-white font-extrabold text-lg">حصاد</span>
+          </Link>
 
         <div className="space-y-3">
           {[
@@ -100,7 +105,7 @@ function LoginPageContent() {
           ))}
         </div>
 
-        <p className="text-forest-400 text-xs">© 2025 حصاد الذكي — Smart Hasaad</p>
+        <p className="text-forest-400 text-xs">© 2025 حصاد — Hasaad</p>
       </div>
 
       {/* Right form panel */}
@@ -108,10 +113,14 @@ function LoginPageContent() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-            <div className="w-9 h-9 bg-forest-500 rounded-xl flex items-center justify-center">
-              <span className="text-white text-xl">🌾</span>
-            </div>
-            <span className="font-extrabold text-stone-900 text-lg">حصاد الذكي</span>
+            <Image
+              src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+              alt="حصاد"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-xl object-contain bg-forest-500 p-1"
+            />
+            <span className="font-extrabold text-stone-900 text-lg">حصاد</span>
           </Link>
 
           <h1 className="text-2xl font-bold text-stone-900 mb-1">أهلاً بعودتك</h1>

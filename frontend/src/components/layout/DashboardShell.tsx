@@ -74,7 +74,7 @@ export default function DashboardShell({ children, role }: DashboardShellProps) 
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-stone-900">{roleLabel}</p>
-                <p className="text-2xs text-stone-400">Smart Hasaad</p>
+                <p className="text-2xs text-stone-400">Hasaad</p>
               </div>
             </div>
           </div>

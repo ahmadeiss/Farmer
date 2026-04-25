@@ -174,7 +174,7 @@ export default function HomePage() {
       <section className="py-16 bg-surface-warm">
         <div className="page-container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-stone-900 mb-3">لماذا حصاد الذكي؟</h2>
+            <h2 className="text-3xl font-bold text-stone-900 mb-3">لماذا حصاد؟</h2>
             <p className="text-stone-500 max-w-md mx-auto">
               منصة زراعية متكاملة تحمي حقوق المزارع وترضي المستهلك
             </p>

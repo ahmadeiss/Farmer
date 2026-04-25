@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
     <DashboardShell role="admin">
       <PageHeader
         title="لوحة الإدارة 👑"
-        subtitle="نظرة شاملة على منصة حصاد الذكي"
+        subtitle="نظرة شاملة على منصة حصاد"
       />
 
       {/* ── Stats Grid ──────────────────────────────────────────── */}

@@ -1,5 +1,5 @@
 /**
- * Smart Hasaad API Client
+ * Hasaad API Client
  * Centralized Axios instance with auth token management.
  * All API calls go through this client.
  */

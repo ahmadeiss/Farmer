@@ -26,7 +26,7 @@ export default function AdminSidebar() {
           </div>
           <div>
             <p className="font-bold text-gray-900">لوحة الإدارة</p>
-            <p className="text-xs text-gray-500">Smart Hasaad Admin</p>
+            <p className="text-xs text-gray-500">Hasaad Admin</p>
           </div>
         </div>
 

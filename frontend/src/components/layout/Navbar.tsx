@@ -41,8 +41,8 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-2 group">
             <span className="text-2xl group-hover:scale-110 transition-transform">🌾</span>
             <div>
-              <p className="font-bold text-brand-700 leading-tight text-lg">حصاد الذكي</p>
-              <p className="text-xs text-gray-400 leading-tight">Smart Hasaad</p>
+              <p className="font-bold text-brand-700 leading-tight text-lg">حصاد</p>
+              <p className="text-xs text-gray-400 leading-tight">Hasaad</p>
             </div>
           </Link>
 

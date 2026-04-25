@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -107,16 +108,19 @@ export default function TopHeader({ className }: TopHeaderProps) {
         <div className="flex items-center justify-between h-14 sm:h-16">
 
           {/* Logo */}
-          <Link href={logoHref} className="flex items-center gap-2 group shrink-0" aria-label="حصاد الذكي">
-            <div className="w-8 h-8 bg-forest-500 rounded-lg flex items-center justify-center
-                            shadow-sm group-hover:shadow-forest/30 transition-shadow">
-              <span className="text-white text-base leading-none">🌾</span>
-            </div>
+          <Link href={logoHref} className="flex items-center gap-2 group shrink-0" aria-label="حصاد">
+            <Image
+              src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+              alt="حصاد"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg object-contain bg-white"
+            />
             <div className="hidden sm:block">
               <p className="font-extrabold text-stone-900 text-base leading-none">
-                حصاد الذكي
+                حصاد
               </p>
-              <p className="text-2xs text-stone-400 leading-none mt-0.5">Smart Hasaad</p>
+              <p className="text-2xs text-stone-400 leading-none mt-0.5">Hasaad</p>
             </div>
           </Link>
 

@@ -60,7 +60,7 @@ export default function FarmerWalletPage() {
                             rounded-xl px-4 py-2.5 text-xs backdrop-blur-sm border border-white/10">
               <span className="text-base">💡</span>
               <span>
-                لاستلام مدفوعاتك، تواصل مع إدارة حصاد الذكي.
+                لاستلام مدفوعاتك، تواصل مع إدارة حصاد.
                 تتم التسوية يدوياً عبر المشرف.
               </span>
             </div>

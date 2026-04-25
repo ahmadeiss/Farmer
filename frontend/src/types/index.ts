@@ -1,5 +1,5 @@
 // ============================================================
-// Smart Hasaad - Core TypeScript Types
+// Hasaad - Core TypeScript Types
 // ============================================================
 
 export type UserRole = "farmer" | "buyer" | "admin" | "driver";

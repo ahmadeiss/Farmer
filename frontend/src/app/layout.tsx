@@ -21,18 +21,18 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "حصاد الذكي — Smart Hasaad",
-    template: "%s | حصاد الذكي",
+    default: "حصاد — Hasaad",
+    template: "%s | حصاد",
   },
   description:
-    "سوق زراعي ذكي يربط المزارعين الفلسطينيين بالمستهلكين مباشرةً — منتجات طازجة بأسعار عادلة وتوصيل موثوق",
-  keywords: ["سوق زراعي", "منتجات طازجة", "مزارعين", "فلسطين", "حصاد"],
-  authors: [{ name: "Smart Hasaad Team" }],
+    "سوق زراعي يربط المزارعين بالمستهلكين مباشرة — منتجات طازجة بأسعار عادلة وتوصيل موثوق",
+  keywords: ["سوق زراعي", "منتجات طازجة", "مزارعين", "فلسطين", "حصاد", "Hasaad"],
+  authors: [{ name: "Hasaad Team" }],
   manifest: "/manifest.json",
   formatDetection: { telephone: false },
   openGraph: {
-    title: "حصاد الذكي — Smart Hasaad",
-    description: "سوق زراعي ذكي — منتجات طازجة مباشرة من المزارع",
+    title: "حصاد — Hasaad",
+    description: "سوق زراعي — منتجات طازجة مباشرة من المزارع",
     locale: "ar_PS",
     type: "website",
   },

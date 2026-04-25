@@ -93,7 +93,7 @@ function RegisterPageContent() {
           <div className="w-9 h-9 bg-forest-500 rounded-xl flex items-center justify-center">
             <span className="text-white text-xl">🌾</span>
           </div>
-          <span className="font-extrabold text-stone-900 text-lg">حصاد الذكي</span>
+          <span className="font-extrabold text-stone-900 text-lg">حصاد</span>
         </Link>
 
         <h1 className="text-2xl font-bold text-stone-900 mb-1">إنشاء حساب جديد</h1>
