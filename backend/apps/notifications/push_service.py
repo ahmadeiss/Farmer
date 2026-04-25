@@ -21,13 +21,14 @@ logger = logging.getLogger(__name__)
 
 # Notification type → frontend URL mapping
 _URL_MAP = {
-    "new_order":    lambda data: "/farmer/orders",
+    "new_order":    lambda data: f"/farmer/orders/{data['order_id']}" if data.get("order_id") else "/farmer/orders",
     "order_status": lambda data: f"/orders/{data['order_id']}" if data.get("order_id") else "/orders",
     "low_stock":    lambda data: "/farmer/inventory",
     "payment":      lambda data: "/farmer/wallet",
-    "review":       lambda data: "/farmer/orders",
+    "review":       lambda data: f"/orders/{data['order_id']}/review" if data.get("order_id") else "/farmer/orders",
     "general":      lambda data: (
-        "/driver/dashboard" if data.get("assignment_id") else "/"
+        "/driver/dashboard" if data.get("assignment_id") else
+        "/admin/farmers?tab=pending" if data.get("action") == "farmer_approval" else "/"
     ),
 }
 

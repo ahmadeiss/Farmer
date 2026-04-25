@@ -44,6 +44,8 @@ function RegisterPageContent() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [farmerPending, setFarmerPending] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
 
   const {
     register,
@@ -64,6 +66,32 @@ function RegisterPageContent() {
     );
   }
 
+  // Farmer pending approval screen
+  if (farmerPending) {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-xl text-center space-y-5">
+          <div className="w-20 h-20 mx-auto rounded-full bg-forest-100 flex items-center justify-center text-4xl">
+            🌾
+          </div>
+          <h1 className="text-2xl font-bold text-stone-900">طلبك قيد المراجعة</h1>
+          <p className="text-stone-500 text-sm leading-relaxed">{pendingMessage}</p>
+          <div className="p-4 bg-forest-50 rounded-xl border border-forest-100">
+            <p className="text-xs text-forest-700 font-medium">
+              📱 تأكد من تفعيل الإشعارات حتى تصلك رسالة التفعيل فور موافقة الإدارة
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/login")}
+            className="w-full py-3 rounded-xl bg-forest-600 text-white font-semibold hover:bg-forest-700 transition-colors"
+          >
+            العودة لتسجيل الدخول
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const roleLabel = role === "farmer" ? "مزارع" : "مشترٍ";
 
   const onSubmit = async (data: FormData) => {
@@ -77,12 +105,21 @@ function RegisterPageContent() {
         role,
       };
       const res = await authApi.register(payload);
-      const { user, access, refresh } = res.data as { user: User; access: string; refresh: string };
-      setAuth(user, { access, refresh });
-      toast.success(`أهلاً ${user.full_name} 👋 تم إنشاء حسابك بنجاح!`);
+      const resData = res.data as { user: User; access?: string; refresh?: string; pending?: boolean; message?: string };
 
-      if (role === "farmer") router.push("/farmer/dashboard");
-      else router.push("/marketplace");
+      // Farmer: pending admin approval
+      if (resData.pending) {
+        setPendingMessage(resData.message || "حسابك قيد المراجعة. سيتم إشعارك عند التفعيل.");
+        setFarmerPending(true);
+        return;
+      }
+
+      // Buyer: auto-login
+      if (resData.access && resData.refresh) {
+        setAuth(resData.user, { access: resData.access, refresh: resData.refresh });
+        toast.success(`أهلاً ${resData.user.full_name} 👋 تم إنشاء حسابك بنجاح!`);
+        router.push("/marketplace");
+      }
     } catch (err: unknown) {
       toast.error(extractApiError(err, "تعذر إنشاء الحساب"));
     } finally {

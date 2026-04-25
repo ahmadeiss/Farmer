@@ -9,24 +9,41 @@
  *   2. Shows a CLICKABLE toast that navigates to the relevant page.
  *
  * Auth: JWT access token sent as ?token= query param.
- * Reconnect: exponential back-off up to 30 s, stops after 5 failures.
+ * Reconnect: exponential back-off up to 30 s, unlimited retries.
+ * Fallback: polls /notifications/unread-count/ every 30 s as safety net.
  */
 
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
+import type { UserRole } from "@/types";
 
-/** Notification type → frontend URL (mirrors backend push_service.py) */
-function getNotificationUrl(type: string, data: Record<string, unknown>): string {
+/** Role-aware notification URL routing */
+function getNotificationUrl(type: string, data: Record<string, unknown>, role?: UserRole): string {
   switch (type) {
-    case "new_order":    return "/farmer/orders";
-    case "order_status": return data.order_id ? `/orders/${data.order_id}` : "/orders";
-    case "low_stock":    return "/farmer/inventory";
-    case "payment":      return "/farmer/wallet";
-    case "review":       return data.order_id ? `/orders/${data.order_id}/review` : "/orders";
-    case "general":      return data.assignment_id ? "/driver/dashboard" : "/";
-    default:             return "/notifications";
+    case "new_order":
+      // Farmers go to their specific order
+      if (data.order_id) return `/farmer/orders/${data.order_id}`;
+      return "/farmer/orders";
+    case "order_status":
+      // Buyers go to their order detail
+      if (data.order_id) return `/orders/${data.order_id}`;
+      return "/orders";
+    case "low_stock":
+      return "/farmer/inventory";
+    case "payment":
+      return "/farmer/wallet";
+    case "review":
+      if (data.order_id) return `/orders/${data.order_id}/review`;
+      return role === "farmer" ? "/farmer/orders" : "/orders";
+    case "general":
+      if (data.assignment_id) return "/driver/dashboard";
+      if (data.action === "farmer_approval") return "/admin/farmers?tab=pending";
+      if (data.action === "farmer_approved") return "/login";
+      return "/";
+    default:
+      return "/notifications";
   }
 }
 
@@ -42,20 +59,65 @@ const typeIcons: Record<string, string> = {
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
   .replace(/^http/, "ws");
 
-const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 2000;
+const MAX_DELAY_MS  = 30_000;
 
 export function useNotificationSocket() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const qc = useQueryClient();
-  const wsRef    = useRef<WebSocket | null>(null);
-  const retryRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wsRef       = useRef<WebSocket | null>(null);
+  const retryRef    = useRef(0);
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const unmountedRef = useRef(false);
 
   useEffect(() => {
     unmountedRef.current = false;
     if (!isAuthenticated) return;
+
+    // ── Polling fallback: refresh notification count every 30 s ─────────
+    pollRef.current = setInterval(() => {
+      qc.invalidateQueries({ queryKey: ["unread-count"] });
+    }, 30_000);
+
+    function showToast(
+      notifType: string,
+      notifData: Record<string, unknown>,
+      title: string,
+      body: string,
+    ) {
+      const targetUrl = getNotificationUrl(notifType, notifData, user?.role);
+      const icon = typeIcons[notifType] ?? "🔔";
+
+      toast(
+        (t) => (
+          <button
+            className="w-full text-right"
+            style={{ all: "unset", cursor: "pointer", width: "100%", display: "block" }}
+            onClick={() => {
+              toast.dismiss(t.id);
+              window.location.href = targetUrl;
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", direction: "rtl" }}>
+              <span style={{ fontSize: "20px", lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 700, fontSize: "13px", margin: 0, color: "#1c1917" }}>{title}</p>
+                {body && (
+                  <p style={{ fontSize: "12px", margin: "2px 0 0", color: "#78716c", whiteSpace: "normal" }}>
+                    {body}
+                  </p>
+                )}
+                <p style={{ fontSize: "10px", margin: "4px 0 0", color: "#1a9d65", fontWeight: 600 }}>
+                  اضغط للعرض ←
+                </p>
+              </div>
+            </div>
+          </button>
+        ),
+        { duration: 7000, style: { padding: "12px 14px", maxWidth: "360px", direction: "rtl" } },
+      );
+    }
 
     function connect() {
       if (unmountedRef.current) return;
@@ -81,49 +143,25 @@ export function useNotificationSocket() {
           };
 
           if (msg.type === "notification" && msg.notification) {
-            // 1. Refresh caches
+            // 1. Invalidate caches for instant badge update
             qc.invalidateQueries({ queryKey: ["unread-count"] });
             qc.invalidateQueries({ queryKey: ["notifications"] });
 
-            // 2. Build deep-link URL
-            const notifType = msg.notification.type ?? "general";
+            // 2. Invalidate related order queries so UI updates in real time
             const notifData = msg.notification.data ?? {};
-            const targetUrl = getNotificationUrl(notifType, notifData);
-            const icon      = typeIcons[notifType] ?? "🔔";
-            const title     = msg.notification.title ?? "إشعار جديد";
-            const body      = msg.notification.body  ?? "";
+            if (notifData.order_id) {
+              qc.invalidateQueries({ queryKey: ["my-order", String(notifData.order_id)] });
+              qc.invalidateQueries({ queryKey: ["my-orders"] });
+              qc.invalidateQueries({ queryKey: ["farmer-order", String(notifData.order_id)] });
+              qc.invalidateQueries({ queryKey: ["farmer-orders"] });
+            }
 
-            // 3. Clickable JSX toast
-            toast(
-              (t) => (
-                <button
-                  className="w-full text-right"
-                  style={{ all: "unset", cursor: "pointer", width: "100%", display: "block" }}
-                  onClick={() => {
-                    toast.dismiss(t.id);
-                    window.location.href = targetUrl;
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", direction: "rtl" }}>
-                    <span style={{ fontSize: "20px", lineHeight: 1, flexShrink: 0 }}>{icon}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: "13px", margin: 0, color: "#1c1917" }}>{title}</p>
-                      {body && (
-                        <p style={{ fontSize: "12px", margin: "2px 0 0", color: "#78716c", whiteSpace: "normal" }}>
-                          {body}
-                        </p>
-                      )}
-                      <p style={{ fontSize: "10px", margin: "4px 0 0", color: "#1a9d65", fontWeight: 600 }}>
-                        اضغط للعرض ←
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ),
-              {
-                duration: 7000,
-                style: { padding: "12px 14px", maxWidth: "360px", direction: "rtl" },
-              },
+            // 3. Show clickable toast
+            showToast(
+              msg.notification.type ?? "general",
+              notifData,
+              msg.notification.title ?? "إشعار جديد",
+              msg.notification.body ?? "",
             );
 
           } else if (msg.type === "connected") {
@@ -138,8 +176,8 @@ export function useNotificationSocket() {
         wsRef.current = null;
         if (unmountedRef.current) return;
         retryRef.current += 1;
-        if (retryRef.current > MAX_RETRIES) return;
-        const delay = Math.min(BASE_DELAY_MS * 2 ** (retryRef.current - 1), 30_000);
+        // Unlimited retries with exponential back-off capped at 30 s
+        const delay = Math.min(BASE_DELAY_MS * 2 ** Math.min(retryRef.current - 1, 10), MAX_DELAY_MS);
         timerRef.current = setTimeout(connect, delay);
       };
 
@@ -151,11 +189,12 @@ export function useNotificationSocket() {
     return () => {
       unmountedRef.current = true;
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.close();
         wsRef.current = null;
       }
     };
-  }, [isAuthenticated, qc]);
+  }, [isAuthenticated, user?.role, qc]);
 }

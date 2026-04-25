@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from apps.common.permissions import IsAdmin
 from .models import User
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserProfileSerializer,
@@ -25,14 +26,47 @@ logger = logging.getLogger(__name__)
 @permission_classes([AllowAny])
 def register_view(request):
     """Register a new farmer or buyer account.
-    Returns the same shape as login: { user, access, refresh }
+    Buyers: auto-activated, returns { user, access, refresh }
+    Farmers: pending admin approval, returns { pending: true, message }
     """
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    user.update_last_login()
     logger.info(f"New user registered: {user.phone} role={user.role}")
 
+    # Farmers require admin approval before accessing the platform
+    if user.role == "farmer":
+        # Notify admins about the pending registration
+        try:
+            from apps.notifications.services import NotificationService
+            from .models import User as UserModel
+            admin_users = UserModel.objects.filter(role="admin", is_active=True)
+            for admin in admin_users:
+                NotificationService.notify_user(
+                    user=admin,
+                    title="🌾 طلب تسجيل مزارع جديد",
+                    body=f"تسجّل {user.full_name} ({user.phone}) كمزارع ويحتاج لمراجعة وتفعيل.",
+                    notification_type="general",
+                    data={"farmer_user_id": user.id, "action": "farmer_approval"},
+                )
+        except Exception as exc:
+            logger.warning(f"Could not notify admins of new farmer registration: {exc}")
+
+        return Response(
+            {
+                "pending": True,
+                "message": (
+                    "تم استلام طلب تسجيلك كمزارع بنجاح! "
+                    "سيقوم فريقنا بمراجعة بياناتك وتفعيل حسابك خلال 24 ساعة. "
+                    "ستتلقى إشعاراً عند تفعيل الحساب."
+                ),
+                "user": UserProfileSerializer(user).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Buyers: auto-activate and return tokens
+    user.update_last_login()
     refresh = RefreshToken.for_user(user)
     return Response(
         {
@@ -168,4 +202,121 @@ def otp_verify_view(request):
         "message": "تم التحقق بنجاح.",
         "access": str(refresh.access_token),
         "refresh": str(refresh),
+    })
+
+
+# ── Admin: User Management ─────────────────────────────────────────────────
+
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def admin_pending_farmers_view(request):
+    """Admin: list all farmers pending approval (is_active=False)."""
+    farmers = User.objects.filter(role=User.Role.FARMER, is_active=False).order_by("-created_at")
+    data = [UserProfileSerializer(u).data for u in farmers]
+    return Response({"count": len(data), "results": data})
+
+
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def admin_all_users_view(request):
+    """Admin: list all users with optional role/status filters."""
+    role = request.query_params.get("role")
+    is_active = request.query_params.get("is_active")
+    search = request.query_params.get("search", "").strip()
+
+    qs = User.objects.all().order_by("-created_at")
+    if role:
+        qs = qs.filter(role=role)
+    if is_active is not None:
+        qs = qs.filter(is_active=(is_active.lower() == "true"))
+    if search:
+        from django.db.models import Q
+        qs = qs.filter(Q(full_name__icontains=search) | Q(phone__icontains=search))
+
+    data = [UserProfileSerializer(u).data for u in qs[:100]]
+    return Response({"count": qs.count(), "results": data})
+
+
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def admin_approve_farmer_view(request, user_id):
+    """Admin: approve a pending farmer account."""
+    try:
+        farmer = User.objects.get(id=user_id, role=User.Role.FARMER)
+    except User.DoesNotExist:
+        return Response({"error": "المزارع غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+
+    farmer.is_active = True
+    farmer.is_verified = True
+    farmer.save(update_fields=["is_active", "is_verified", "updated_at"])
+
+    # Notify the farmer their account has been approved
+    try:
+        from apps.notifications.services import NotificationService
+        NotificationService.notify_user(
+            user=farmer,
+            title="🎉 تم تفعيل حسابك!",
+            body="تهانينا! تمت الموافقة على حسابك كمزارع في منصة حصاد. يمكنك الآن تسجيل الدخول وإضافة منتجاتك.",
+            notification_type="general",
+            data={"action": "farmer_approved"},
+        )
+    except Exception as exc:
+        logger.warning(f"Could not notify farmer #{farmer.id} of approval: {exc}")
+
+    logger.info(f"Farmer {farmer.phone} approved by admin {request.user.phone}")
+    return Response({
+        "message": f"تم تفعيل حساب المزارع {farmer.full_name} بنجاح.",
+        "user": UserProfileSerializer(farmer).data,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def admin_reject_farmer_view(request, user_id):
+    """Admin: reject/delete a pending farmer account."""
+    try:
+        farmer = User.objects.get(id=user_id, role=User.Role.FARMER)
+    except User.DoesNotExist:
+        return Response({"error": "المزارع غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+
+    reason = request.data.get("reason", "لم تستوفِ بياناتك شروط التسجيل.")
+    farmer_name = farmer.full_name
+    farmer_phone = farmer.phone
+
+    # Hard delete the account (or you could soft-delete by setting is_active=False permanently)
+    farmer.delete()
+
+    logger.info(f"Farmer {farmer_phone} registration rejected by admin {request.user.phone}. Reason: {reason}")
+    return Response({
+        "message": f"تم رفض وحذف طلب تسجيل المزارع {farmer_name}.",
+        "reason": reason,
+    })
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAdmin])
+def admin_toggle_user_view(request, user_id):
+    """Admin: activate or deactivate any user account."""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "المستخدم غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+
+    if user.role == "admin" and not request.user.is_staff:
+        return Response({"error": "لا يمكن تعطيل حساب مسؤول آخر."}, status=status.HTTP_403_FORBIDDEN)
+
+    action = request.data.get("action", "toggle")
+    if action == "activate":
+        user.is_active = True
+    elif action == "deactivate":
+        user.is_active = False
+    else:
+        user.is_active = not user.is_active
+
+    user.save(update_fields=["is_active", "updated_at"])
+    state = "مفعّل" if user.is_active else "معطّل"
+    logger.info(f"User {user.phone} {state} by admin {request.user.phone}")
+    return Response({
+        "message": f"تم تغيير حالة الحساب. الحساب الآن {state}.",
+        "user": UserProfileSerializer(user).data,
     })

@@ -31,8 +31,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def validate_role(self, value):
-        if value == User.Role.ADMIN:
-            raise serializers.ValidationError("لا يمكن التسجيل كمسؤول.")
+        if value in (User.Role.ADMIN, User.Role.DRIVER):
+            raise serializers.ValidationError("لا يمكن التسجيل بهذا الدور.")
         return value
 
     def validate_phone(self, value):
@@ -50,6 +50,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("password_confirm", None)
         password = validated_data.pop("password")
+        role = validated_data.get("role", User.Role.BUYER)
+        # Farmers start as inactive — must be approved by admin before they can log in
+        if role == User.Role.FARMER:
+            validated_data["is_active"] = False
         user = User(**validated_data)
         user.set_password(password)
         user.save()
@@ -65,11 +69,23 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         phone = attrs.get("phone", "").strip()
         password = attrs.get("password")
+
+        # Check if user exists but is inactive (pending farmer approval)
+        try:
+            raw_user = User.objects.get(phone=phone)
+            if not raw_user.is_active:
+                if raw_user.role == User.Role.FARMER:
+                    raise serializers.ValidationError(
+                        "حسابك كمزارع قيد المراجعة من قِبل الإدارة. "
+                        "ستتلقى إشعاراً عند تفعيل حسابك."
+                    )
+                raise serializers.ValidationError("الحساب معطّل. يرجى التواصل مع الدعم.")
+        except User.DoesNotExist:
+            pass
+
         user = authenticate(username=phone, password=password)
         if not user:
             raise serializers.ValidationError("رقم الهاتف أو كلمة المرور غير صحيحة.")
-        if not user.is_active:
-            raise serializers.ValidationError("الحساب معطّل. يرجى التواصل مع الدعم.")
         attrs["user"] = user
         return attrs
 

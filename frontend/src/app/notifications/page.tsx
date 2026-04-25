@@ -4,13 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { notificationsApi } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 import TopHeader from "@/components/layout/TopHeader";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import type { Notification } from "@/types";
+import type { Notification, UserRole } from "@/types";
 
 const typeIcons: Record<string, string> = {
   new_order:    "📦",
@@ -30,21 +31,27 @@ const typeLabels: Record<string, string> = {
   general:      "إشعار",
 };
 
-/** Resolve the deep-link URL from a notification's type + data */
-function getNotificationUrl(type: string, data: Record<string, unknown>): string {
+/** Resolve the deep-link URL from a notification's type + data + user role */
+function getNotificationUrl(type: string, data: Record<string, unknown>, role?: UserRole): string {
   switch (type) {
     case "new_order":
+      if (data.order_id) return `/farmer/orders/${data.order_id}`;
       return "/farmer/orders";
     case "order_status":
-      return data.order_id ? `/orders/${data.order_id}` : "/orders";
+      if (data.order_id) return `/orders/${data.order_id}`;
+      return role === "farmer" ? "/farmer/orders" : "/orders";
     case "low_stock":
       return "/farmer/inventory";
     case "payment":
       return "/farmer/wallet";
     case "review":
-      return data.order_id ? `/orders/${data.order_id}/review` : "/orders";
+      if (data.order_id) return `/orders/${data.order_id}/review`;
+      return role === "farmer" ? "/farmer/orders" : "/orders";
     case "general":
-      return data.assignment_id ? "/driver/dashboard" : "/";
+      if (data.assignment_id) return "/driver/dashboard";
+      if (data.action === "farmer_approval") return "/admin/farmers?tab=pending";
+      if (data.action === "farmer_approved") return "/login";
+      return "/";
     default:
       return "/";
   }
@@ -53,6 +60,7 @@ function getNotificationUrl(type: string, data: Record<string, unknown>): string
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { user } = useAuthStore();
 
   const { data: notifications, isLoading } = useQuery<Notification[]>({
     queryKey: ["notifications"],
@@ -60,6 +68,7 @@ export default function NotificationsPage() {
       const d = r.data;
       return d.results ?? d;
     }),
+    refetchInterval: 30_000,
   });
 
   const { mutate: markAllRead, isPending } = useMutation({
@@ -83,7 +92,7 @@ export default function NotificationsPage() {
     if (!notification.is_read) {
       markRead(notification.id);
     }
-    const url = getNotificationUrl(notification.notification_type, notification.data);
+    const url = getNotificationUrl(notification.notification_type, notification.data, user?.role);
     router.push(url);
   };
 

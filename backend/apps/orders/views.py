@@ -96,7 +96,7 @@ def checkout_view(request):
                 title="🛒 طلب جديد!",
                 body=f"تلقيت طلباً جديداً من {order.buyer.full_name} بقيمة {order.total} ₪",
                 notification_type="new_order",
-                data={"order_id": order.id},
+                data={"order_id": order.id, "farmer_order_id": order.id},
             )
         except Exception as exc:
             logger.warning(f"Notification failed for order #{order.id}: {exc}")

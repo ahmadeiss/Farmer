@@ -17,12 +17,20 @@ const QUICK_ACTIONS = [
   { label: "تسويات المحافظ",    icon: "💰", href: "/admin/wallets"   },
   { label: "إدارة المنتجات",    icon: "🌱", href: "/admin/products"  },
   { label: "التحليلات المفصّلة", icon: "📈", href: "/admin/analytics" },
+  { label: "موافقة المزارعين",  icon: "🌾", href: "/admin/farmers?tab=pending" },
+  { label: "إدارة المستخدمين",  icon: "👥", href: "/admin/users"     },
 ];
 
 export default function AdminDashboardPage() {
   const { data: summary, isLoading } = useQuery<DashboardSummary>({
     queryKey: ["admin-dashboard"],
     queryFn: () => analyticsApi.getDashboard().then((r) => r.data),
+    refetchInterval: 60_000,
+  });
+
+  const { data: pendingFarmers } = useQuery<{ count: number }>({
+    queryKey: ["admin-pending-farmers"],
+    queryFn: () => import("@/lib/api").then((m) => m.adminApi.getPendingFarmers().then((r) => r.data)),
     refetchInterval: 60_000,
   });
 
@@ -68,6 +76,8 @@ export default function AdminDashboardPage() {
               icon="🌱" colorScheme="green" href="/admin/products" />
             <StatsCard title="طلبات معلقة"        value={summary?.orders.pending ?? "—"}
               icon="⏳" colorScheme="red" href="/admin/orders?status=pending" />
+            <StatsCard title="مزارعون بانتظار الموافقة" value={pendingFarmers?.count ?? 0}
+              icon="🌾" colorScheme="earth" href="/admin/farmers?tab=pending" />
           </>
         )}
       </div>

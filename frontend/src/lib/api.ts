@@ -259,4 +259,13 @@ export const adminApi = {
   getAdminProducts: (params?: object) => apiClient.get("/catalog/admin/products/", { params }),
   toggleProductVisibility: (productId: number, isActive: boolean) =>
     apiClient.patch(`/catalog/admin/products/${productId}/`, { is_active: isActive }),
+
+  // User management
+  getAllUsers: (params?: object) => apiClient.get("/auth/admin/users/", { params }),
+  getPendingFarmers: () => apiClient.get("/auth/admin/farmers/pending/"),
+  approveFarmer: (userId: number) => apiClient.post(`/auth/admin/farmers/${userId}/approve/`),
+  rejectFarmer: (userId: number, reason?: string) =>
+    apiClient.post(`/auth/admin/farmers/${userId}/reject/`, { reason }),
+  toggleUser: (userId: number, action: "activate" | "deactivate" | "toggle") =>
+    apiClient.patch(`/auth/admin/users/${userId}/toggle/`, { action }),
 };

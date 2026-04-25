@@ -26,6 +26,7 @@ const ADMIN_NAV = [
   { href: "/admin/buyers", label: "المشترون", icon: "🛒" },
   { href: "/admin/wallets", label: "المحافظ", icon: "💰" },
   { href: "/admin/analytics", label: "التحليلات", icon: "📈" },
+  { href: "/admin/users", label: "المستخدمون", icon: "👥" },
 ];
 
 interface DashboardShellProps {
