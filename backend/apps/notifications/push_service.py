@@ -89,14 +89,21 @@ class PushService:
     @staticmethod
     def send_push(user, notification: Notification) -> None:
         """Fire-and-forget: send push to all active subscriptions for this user."""
+        # Use the Hasaad logo hosted on Cloudinary as the notification icon
+        LOGO_URL = "https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+
         payload = {
             "title": notification.title,
             "body": notification.body,
-            "icon": "/icons/icon-192.png",
-            "badge": "/icons/icon-72.png",
+            "icon": LOGO_URL,
+            "badge": LOGO_URL,
             "tag": f"hasaad-{notification.id}",
-            "url": _get_url(notification),
-            "data": {"notification_id": notification.id},
+            "url": frontend_url + _get_url(notification),
+            "data": {
+                "notification_id": notification.id,
+                "url": _get_url(notification),
+            },
         }
 
         def _worker():

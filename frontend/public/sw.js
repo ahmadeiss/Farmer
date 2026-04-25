@@ -34,24 +34,26 @@ self.addEventListener("push", (event) => {
     };
   }
 
-  const title = payload.title || "حصاد الذكي";
+  const title = payload.title || "حصاد";
+  // Resolve the target URL: backend sends full URL in payload.url
+  // and the relative path in payload.data.url
+  const targetUrl = payload.url || payload.data?.url || "/notifications";
+
   const options = {
     body: payload.body || "",
+    icon: payload.icon || "https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png",
+    badge: payload.badge || "https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png",
     tag: payload.tag || "hasaad-notification",
-    // Replace older notification with the same tag instead of stacking
     renotify: false,
-    // Keep notification visible until user interacts
-    requireInteraction: false,
-    // RTL direction for Arabic text
+    requireInteraction: true,   // stay visible until user acts (important for mobile)
     dir: "rtl",
     lang: "ar",
     data: {
-      url: payload.url || "/",
+      url: targetUrl,
       notification_id: payload.data?.notification_id,
     },
-    // Action buttons
     actions: [
-      { action: "open", title: "عرض" },
+      { action: "open",    title: "عرض الآن" },
       { action: "dismiss", title: "إغلاق" },
     ],
   };
