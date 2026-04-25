@@ -24,13 +24,24 @@ logger = logging.getLogger(__name__)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
-    """Register a new farmer or buyer account."""
+    """Register a new farmer or buyer account.
+    Returns the same shape as login: { user, access, refresh }
+    """
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
     user.update_last_login()
     logger.info(f"New user registered: {user.phone} role={user.role}")
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    refresh = RefreshToken.for_user(user)
+    return Response(
+        {
+            "user": UserProfileSerializer(user).data,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
 @extend_schema(request=LoginSerializer, tags=["Auth"])

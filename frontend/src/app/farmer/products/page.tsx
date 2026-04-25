@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { catalogApi } from "@/lib/api";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, HASAAD_LOGO_URL } from "@/lib/utils";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
@@ -15,6 +15,56 @@ import EmptyState from "@/components/ui/EmptyState";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import PriceDisplay from "@/components/ui/PriceDisplay";
 import type { PaginatedResponse, ProductList } from "@/types";
+
+/** Mini logo placeholder — matches buyer ProductCard style */
+function ProductImageCell({ product }: { product: ProductList }) {
+  const [loaded, setLoaded] = useState(false);
+  const isPlaceholder = !product.image;
+
+  return (
+    <div className="relative aspect-video bg-stone-100 overflow-hidden">
+      {!loaded && (
+        <div className="absolute inset-0 bg-stone-200 animate-pulse" />
+      )}
+
+      {isPlaceholder ? (
+        <div
+          className={`absolute inset-0 flex items-center justify-center
+            bg-gradient-to-br from-forest-50 via-white to-forest-100
+            transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        >
+          {/* Radial glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,157,101,0.12)_0%,transparent_70%)]" />
+          {/* Spinning ring + logo */}
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-white/80 shadow-md border border-forest-100">
+            <div
+              className="absolute inset-0 rounded-full border-2 border-forest-200/50"
+              style={{ borderTopColor: "transparent", borderBottomColor: "transparent", animation: "spin 12s linear infinite" }}
+            />
+            <Image
+              src={HASAAD_LOGO_URL}
+              alt="حصاد"
+              width={48}
+              height={48}
+              className="object-contain w-12 h-12 drop-shadow-sm"
+              onLoad={() => setLoaded(true)}
+            />
+          </div>
+        </div>
+      ) : (
+        <Image
+          src={getImageUrl(product.image)}
+          alt={product.title}
+          fill
+          className={`object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+      )}
+    </div>
+  );
+}
 
 export default function FarmerProductsPage() {
   const queryClient = useQueryClient();
@@ -67,13 +117,8 @@ export default function FarmerProductsPage() {
             <div key={product.id}
               className="card overflow-hidden hover:shadow-card-hover transition-all duration-200">
               {/* Image */}
-              <div className="relative aspect-video bg-stone-100">
-                <Image
-                  src={getImageUrl(product.image)}
-                  alt={product.title}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative">
+                <ProductImageCell product={product} />
                 {/* Status overlays */}
                 <div className="absolute top-2 end-2 flex flex-col gap-1">
                   {!product.is_in_stock && (

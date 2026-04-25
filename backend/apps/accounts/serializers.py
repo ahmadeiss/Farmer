@@ -9,17 +9,20 @@ from .models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """User registration - creates account and returns JWT tokens."""
+    """User registration — validates and creates account.
+    The view generates tokens after saving; this serializer no longer
+    includes a `tokens` field so the response stays clean.
+    """
 
-    password = serializers.CharField(write_only=True, min_length=8)
-    tokens = serializers.SerializerMethodField(read_only=True)
+    password = serializers.CharField(write_only=True, min_length=6)
+    password_confirm = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = User
         fields = [
             "id", "full_name", "phone", "email", "role",
             "is_active", "is_verified", "created_at",
-            "password", "tokens",
+            "password", "password_confirm",
         ]
         read_only_fields = ["id", "is_active", "is_verified", "created_at"]
         extra_kwargs = {
@@ -34,21 +37,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         # Normalize phone: strip spaces
-        return value.strip().replace(" ", "")
+        normalized = value.strip().replace(" ", "")
+        if User.objects.filter(phone=normalized).exists():
+            raise serializers.ValidationError("رقم الهاتف مسجّل مسبقاً.")
+        return normalized
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("password_confirm"):
+            raise serializers.ValidationError({"password_confirm": "كلمات المرور غير متطابقة."})
+        return attrs
 
     def create(self, validated_data):
+        validated_data.pop("password_confirm", None)
         password = validated_data.pop("password")
         user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user
-
-    def get_tokens(self, user):
-        refresh = RefreshToken.for_user(user)
-        return {
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        }
 
 
 class LoginSerializer(serializers.Serializer):

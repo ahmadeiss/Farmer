@@ -45,12 +45,7 @@ const CATEGORIES = [
   { icon: "🌾", name: "حبوب", color: "from-amber-500/10 to-amber-600/10", border: "border-amber-200" },
 ];
 
-const STATS = [
-  { value: "500+", label: "منتج طازج" },
-  { value: "50+", label: "مزارع موثوقة" },
-  { value: "10K+", label: "طلب منفّذ" },
-  { value: "4.8", label: "تقييم" },
-];
+
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
@@ -82,110 +77,143 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-surface-warm">
       <TopHeader />
 
-      {/* Hero Section - Modern Design */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-forest-900 via-forest-800 to-forest-700" />
-        
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full" style={{
-            backgroundImage: `radial-gradient(circle at 20% 30%, #d4771a 0%, transparent 50%), radial-gradient(circle at 80% 20%, #1a9d65 0%, transparent 40%), radial-gradient(circle at 60% 80%, #22c55e 0%, transparent 30%)`,
-          }} />
-        </div>
+      {/* ═══════════════════ Hero Section ═══════════════════ */}
+      <section className="relative overflow-hidden min-h-[480px] sm:min-h-[560px] flex items-center">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-forest-950 via-forest-900 to-forest-800" />
 
-        {/* Floating Elements */}
-        <div className={`absolute inset-0 overflow-hidden pointer-events-none transition-all duration-1000 ${heroLoaded ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="absolute -top-20 -end-20 w-64 h-64 bg-forest-500/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-1/2 -start-20 w-48 h-48 bg-amber-500/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
-        </div>
+        {/* Subtle mesh gradient overlay */}
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: `radial-gradient(ellipse at 10% 50%, rgba(212,119,26,0.25) 0%, transparent 55%),
+                            radial-gradient(ellipse at 90% 20%, rgba(26,157,101,0.3) 0%, transparent 50%)`,
+        }} />
 
-        <div className="relative page-container py-16 sm:py-20 lg:py-24">
+        {/* Grain texture for depth */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+        }} />
 
-          {/* ── Animated Logo — right side on desktop, top on mobile ── */}
-          <div className={`
-            absolute inset-y-0 start-0 sm:start-auto sm:end-0
-            flex items-center justify-center
-            w-full sm:w-auto pointer-events-none
-            transition-all duration-1000 delay-300
-            ${heroLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}
-          `}>
-            <div className="relative flex items-center justify-center opacity-20 sm:opacity-30 lg:opacity-40 sm:me-8 lg:me-16">
-              {/* Outer slow spinning ring */}
-              <div className="absolute w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 rounded-full
-                              border border-white/20
-                              animate-[spin_20s_linear_infinite]"
-                   style={{ borderTopColor: "rgba(255,255,255,0.5)", borderRightColor: "transparent",
-                            borderBottomColor: "rgba(255,255,255,0.3)", borderLeftColor: "transparent" }} />
-              {/* Inner counter-spin ring */}
-              <div className="absolute w-36 h-36 sm:w-48 sm:h-48 lg:w-60 lg:h-60 rounded-full
-                              border border-white/10
-                              animate-[spin_14s_linear_infinite_reverse]"
-                   style={{ borderTopColor: "transparent", borderRightColor: "rgba(212,119,26,0.6)",
-                            borderBottomColor: "transparent", borderLeftColor: "rgba(26,157,101,0.5)" }} />
-              {/* Glow */}
-              <div className="absolute w-32 h-32 sm:w-40 sm:h-40 lg:w-52 lg:h-52 rounded-full
-                              bg-forest-400/10 blur-2xl animate-pulse" />
-              {/* Logo image */}
-              <Image
-                src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
-                alt="حصاد"
-                width={120}
-                height={120}
-                className="relative w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36 object-contain"
-                style={{ animation: "floatLogo 6s ease-in-out infinite, logoGlow 4s ease-in-out infinite" }}
-                priority
-              />
-            </div>
-          </div>
+        <div className="relative w-full page-container py-16 sm:py-20 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-          <div className="max-w-2xl relative z-10">
-            {/* Tag */}
-            <div className={`inline-flex items-center gap-2 bg-white/10 text-forest-100 px-4 py-1.5 rounded-full text-sm font-medium mb-6 backdrop-blur-sm transition-all duration-700 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-forest-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-forest-300"></span>
-              </span>
-              منتجات طازجة مباشرة من المزارع
-            </div>
-
-            <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4 transition-all duration-700 delay-100 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-              سوقك الزراعي{" "}
-              <span className="text-forest-300">الذكي</span>
-            </h1>
-
-            <p className={`text-lg sm:text-xl text-forest-100 leading-relaxed mb-8 max-w-xl transition-all duration-700 delay-200 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-              نربط المزارعين بالمستهلكين مباشرة. منتجات طازجة، أسعار عادلة، توصيل موثوق.
-            </p>
-
-            <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-300 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-              <Link
-                href="/marketplace"
-                className="inline-flex items-center gap-2 bg-white text-forest-700 font-bold px-6 py-3.5 rounded-xl hover:bg-forest-50 transition-all duration-200 hover:shadow-lg hover:shadow-forest-500/25 active:scale-[0.98] shadow-lg text-base"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m5-9l2 9" />
-                </svg>
-                تصفّح السوق الآن
-              </Link>
-              {showRegisterCTAs && (
-                <Link
-                  href="/register?role=farmer"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 font-semibold px-6 py-3.5 rounded-xl hover:bg-white/20 transition-all duration-200 backdrop-blur-sm text-base"
-                >
-                  🌾 انضم كمزارع
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className={`mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 transition-all duration-700 delay-500 transform ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-            {STATS.map((stat, i) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</div>
-                <div className="text-sm text-forest-200">{stat.label}</div>
+            {/* ── Left: Text Content ── */}
+            <div className="order-2 lg:order-1">
+              {/* Live badge */}
+              <div className={`inline-flex items-center gap-2 bg-white/8 border border-white/12 text-forest-200 px-4 py-1.5 rounded-full text-sm font-medium mb-7 backdrop-blur-sm transition-all duration-700 ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-forest-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-forest-300" />
+                </span>
+                سوق زراعي فلسطيني — مباشر من المزرعة
               </div>
-            ))}
+
+              <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] mb-5 transition-all duration-700 delay-100 ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+                سوقك الزراعي
+                <br />
+                <span className="bg-gradient-to-l from-forest-300 to-emerald-300 bg-clip-text text-transparent">
+                  الذكي
+                </span>
+              </h1>
+
+              <p className={`text-base sm:text-lg text-forest-100/80 leading-relaxed mb-8 max-w-lg transition-all duration-700 delay-200 ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+                نربط المزارعين الفلسطينيين بالمستهلكين مباشرة —<br className="hidden sm:block" />
+                منتجات طازجة، أسعار عادلة، ودفع آمن عند الاستلام.
+              </p>
+
+              <div className={`flex flex-wrap gap-3 transition-all duration-700 delay-300 ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 bg-white text-forest-800 font-bold px-7 py-3.5 rounded-2xl hover:bg-forest-50 transition-all duration-200 shadow-xl shadow-black/20 hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] text-base"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m5-9l2 9" />
+                  </svg>
+                  تصفّح السوق
+                </Link>
+                {showRegisterCTAs && (
+                  <Link
+                    href="/register?role=farmer"
+                    className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 font-semibold px-7 py-3.5 rounded-2xl hover:bg-white/18 transition-all duration-200 backdrop-blur-sm text-base hover:-translate-y-0.5 active:scale-[0.98]"
+                  >
+                    🌾 انضم كمزارع
+                  </Link>
+                )}
+              </div>
+
+              {/* Trust badges */}
+              <div className={`mt-8 flex flex-wrap gap-4 transition-all duration-700 delay-500 ${heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+                {["✓ دفع عند الاستلام", "✓ جودة مضمونة", "✓ توصيل موثوق"].map((t) => (
+                  <span key={t} className="text-xs text-forest-300/80 font-medium">{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Right: Logo Visual ── */}
+            <div className={`order-1 lg:order-2 flex items-center justify-center transition-all duration-1000 delay-200 ${heroLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}>
+              <div className="relative flex items-center justify-center w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80">
+
+                {/* Outermost glow ring */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-forest-500/15 to-emerald-500/10 blur-3xl" />
+
+                {/* Spinning dashed ring — large */}
+                <div
+                  className="absolute inset-2 rounded-full border border-dashed border-white/10"
+                  style={{ animation: "spin 25s linear infinite" }}
+                />
+
+                {/* Spinning solid ring — medium */}
+                <div
+                  className="absolute inset-8 sm:inset-10 rounded-full"
+                  style={{
+                    background: "conic-gradient(from 0deg, rgba(26,157,101,0.4), rgba(212,119,26,0.2), rgba(26,157,101,0.4))",
+                    animation: "spin 10s linear infinite",
+                    borderRadius: "9999px",
+                    padding: "1px",
+                  }}
+                >
+                  <div className="w-full h-full rounded-full bg-forest-900/80" />
+                </div>
+
+                {/* Counter-spin inner accent */}
+                <div
+                  className="absolute inset-12 sm:inset-16 rounded-full border border-earth-400/30"
+                  style={{ animation: "spin 8s linear infinite reverse" }}
+                />
+
+                {/* Center glass circle */}
+                <div className="absolute inset-14 sm:inset-18 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-inner" />
+
+                {/* The logo */}
+                <Image
+                  src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
+                  alt="حصاد"
+                  width={160}
+                  height={160}
+                  className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 object-contain"
+                  style={{ animation: "floatLogo 7s ease-in-out infinite, logoGlow 5s ease-in-out infinite" }}
+                  priority
+                />
+
+                {/* Orbiting dot — top */}
+                <div
+                  className="absolute w-3 h-3 rounded-full bg-forest-300 shadow-lg shadow-forest-400/50"
+                  style={{
+                    top: "8%", left: "50%", transformOrigin: "0 140px",
+                    animation: "spin 8s linear infinite",
+                    transform: "translateX(-50%)",
+                  }}
+                />
+                {/* Orbiting dot — bottom */}
+                <div
+                  className="absolute w-2 h-2 rounded-full bg-earth-400 shadow-md shadow-earth-400/50"
+                  style={{
+                    bottom: "10%", right: "15%",
+                    animation: "floatLogo 5s ease-in-out infinite reverse",
+                  }}
+                />
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
