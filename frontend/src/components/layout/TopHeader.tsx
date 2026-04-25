@@ -9,8 +9,35 @@ import { useAuthStore } from "@/store/authStore";
 import { notificationsApi, authApi, cartApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
-import type { Notification, Cart } from "@/types";
+import type { Notification, Cart, UserRole } from "@/types";
 import { dashboardFor } from "@/hooks/useAuthGuard";
+
+/** Role-aware deep-link resolver — mirrors the logic in useNotificationSocket */
+function getNotificationUrl(type: string, data: Record<string, unknown>, role?: UserRole): string {
+  const recipientRole = (data.recipient_role as UserRole | undefined) ?? role;
+  switch (type) {
+    case "new_order":
+      return data.order_id ? `/farmer/orders/${data.order_id}` : "/farmer/orders";
+    case "order_status":
+      if (recipientRole === "farmer")
+        return data.order_id ? `/farmer/orders/${data.order_id}` : "/farmer/orders";
+      return data.order_id ? `/orders/${data.order_id}` : "/orders";
+    case "low_stock":  return "/farmer/inventory";
+    case "payment":    return "/farmer/wallet";
+    case "review":
+      if (data.order_id)
+        return recipientRole === "farmer" ? `/farmer/orders/${data.order_id}` : `/orders/${data.order_id}/review`;
+      return recipientRole === "farmer" ? "/farmer/orders" : "/orders";
+    case "general":
+      if (data.assignment_id) return "/driver/dashboard";
+      if (data.action === "product_approval")  return "/admin/products?tab=pending";
+      if (data.action === "farmer_approval")   return "/admin/farmers?tab=pending";
+      if (data.action === "product_approved" || data.action === "product_rejected") return "/farmer/products";
+      if (data.action === "farmer_approved")   return "/farmer/dashboard";
+      return "/";
+    default: return "/notifications";
+  }
+}
 
 interface TopHeaderProps {
   className?: string;
@@ -236,7 +263,12 @@ export default function TopHeader({ className }: TopHeaderProps) {
                           notifications.map((n) => (
                             <button
                               key={n.id}
-                              onClick={() => { if (!n.is_read) markRead(n.id); }}
+                              onClick={() => {
+                                if (!n.is_read) markRead(n.id);
+                                setBellOpen(false);
+                                const url = getNotificationUrl(n.notification_type, n.data ?? {}, user?.role);
+                                router.push(url);
+                              }}
                               className={cn(
                                 "w-full text-start px-4 py-3 flex gap-3 items-start",
                                 "hover:bg-stone-50 transition-colors border-b border-surface-border last:border-0",

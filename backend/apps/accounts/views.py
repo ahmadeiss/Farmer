@@ -220,10 +220,12 @@ def admin_pending_farmers_view(request):
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def admin_all_users_view(request):
-    """Admin: list all users with optional role/status filters."""
+    """Admin: list all users with optional role/status/search filters + pagination."""
     role = request.query_params.get("role")
     is_active = request.query_params.get("is_active")
     search = request.query_params.get("search", "").strip()
+    page = max(1, int(request.query_params.get("page", 1)))
+    page_size = min(100, int(request.query_params.get("page_size", 30)))
 
     qs = User.objects.all().order_by("-created_at")
     if role:
@@ -234,8 +236,19 @@ def admin_all_users_view(request):
         from django.db.models import Q
         qs = qs.filter(Q(full_name__icontains=search) | Q(phone__icontains=search))
 
-    data = [UserProfileSerializer(u).data for u in qs[:100]]
-    return Response({"count": qs.count(), "results": data})
+    total = qs.count()
+    start = (page - 1) * page_size
+    end = start + page_size
+    total_pages = max(1, -(-total // page_size))  # ceiling division
+    results = [UserProfileSerializer(u).data for u in qs[start:end]]
+    return Response({
+        "count": total,
+        "total_pages": total_pages,
+        "current_page": page,
+        "next": page < total_pages,
+        "previous": page > 1,
+        "results": results,
+    })
 
 
 @api_view(["POST"])

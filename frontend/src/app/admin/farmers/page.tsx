@@ -39,7 +39,7 @@ function AdminFarmersContent() {
     if (t === "pending") setTab("pending");
   }, [searchParams]);
 
-  // All approved farmers
+  // All approved farmers — only fetch when on "all" tab
   const { data, isLoading } = useQuery<PaginatedResponse<FarmerProfile>>({
     queryKey: ["admin-farmers", search, page],
     queryFn: () => adminApi.getFarmers({ search: search || undefined, page }).then((r) => r.data),
@@ -47,12 +47,12 @@ function AdminFarmersContent() {
     enabled: tab === "all",
   });
 
-  // Pending farmers (inactive accounts)
+  // Pending farmers — always fetch so badge count shows on the tab button
   const { data: pendingData, isLoading: pendingLoading } = useQuery<{ count: number; results: User[] }>({
     queryKey: ["admin-pending-farmers"],
     queryFn: () => adminApi.getPendingFarmers().then((r) => r.data),
     refetchInterval: 30_000,
-    enabled: tab === "pending",
+    staleTime: 60_000,
   });
 
   const { mutate: approve, isPending: approving } = useMutation({

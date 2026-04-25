@@ -35,15 +35,20 @@ export default function AdminUsersPage() {
   const [activeFilter, setActiveFilter] = useState<"" | "true" | "false">("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [page, setPage] = useState(1);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery<{ count: number; results: User[] }>({
-    queryKey: ["admin-all-users", search, roleFilter, activeFilter],
+  const { data, isLoading } = useQuery<{
+    count: number; total_pages: number; current_page: number;
+    next: boolean; previous: boolean; results: User[];
+  }>({
+    queryKey: ["admin-all-users", search, roleFilter, activeFilter, page],
     queryFn: () =>
       adminApi.getAllUsers({
         search: search || undefined,
         role: roleFilter || undefined,
         is_active: activeFilter || undefined,
+        page,
       }).then((r) => r.data),
     placeholderData: (prev) => prev,
   });
@@ -79,13 +84,13 @@ export default function AdminUsersPage() {
         <SearchBar
           containerClassName="sm:max-w-xs"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onClear={() => setSearch("")}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onClear={() => { setSearch(""); setPage(1); }}
           placeholder="ابحث بالاسم أو الهاتف..."
         />
         <select
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value as UserRole | "")}
+          onChange={(e) => { setRoleFilter(e.target.value as UserRole | ""); setPage(1); }}
           className="border border-surface-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-forest-400"
         >
           <option value="">كل الأدوار</option>
@@ -93,7 +98,7 @@ export default function AdminUsersPage() {
         </select>
         <select
           value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value as "" | "true" | "false")}
+          onChange={(e) => { setActiveFilter(e.target.value as "" | "true" | "false"); setPage(1); }}
           className="border border-surface-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-forest-400"
         >
           <option value="">كل الحالات</option>
@@ -170,8 +175,17 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 border-t border-surface-border text-xs text-stone-400">
-            إجمالي: {data?.count ?? "—"} مستخدم
+          <div className="px-5 py-3 border-t border-surface-border flex items-center justify-between text-xs text-stone-400">
+            <span>إجمالي: {data?.count ?? "—"} مستخدم</span>
+            {(data?.total_pages ?? 1) > 1 && (
+              <div className="flex items-center gap-2">
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={!data?.previous}
+                  className="px-2 py-1 rounded border border-surface-border hover:bg-stone-50 disabled:opacity-40">→</button>
+                <span className="tabular-nums">{data?.current_page} / {data?.total_pages}</span>
+                <button onClick={() => setPage((p) => p + 1)} disabled={!data?.next}
+                  className="px-2 py-1 rounded border border-surface-border hover:bg-stone-50 disabled:opacity-40">←</button>
+              </div>
+            )}
           </div>
         </div>
       )}

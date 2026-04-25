@@ -37,7 +37,8 @@ export default function AdminProductsPage() {
     queryKey: ["admin-pending-products"],
     queryFn: () => adminApi.getPendingProducts().then((r) => r.data),
     refetchInterval: 30_000,
-    enabled: tab === "pending",
+    // Always fetch so the badge count shows even before switching tabs
+    staleTime: 60_000,
   });
 
   const { mutate: toggleVisibility, isPending: isToggling } = useMutation({
