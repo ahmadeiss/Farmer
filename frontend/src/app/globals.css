@@ -23,16 +23,16 @@
   --color-earth-600:  #b85f14;
 
   /* Surface Colors */
-  --color-bg:         #faf9f7;   /* Warm page background */
-  --color-surface:    #ffffff;   /* Cards / panels */
-  --color-surface-2:  #f3f1ee;   /* Secondary surface */
-  --color-border:     #e8e4df;   /* Default border */
-  --color-border-2:   #d6d0ca;   /* Stronger border */
+  --color-bg:         #faf9f7;
+  --color-surface:    #ffffff;
+  --color-surface-2:  #f3f1ee;
+  --color-border:     #e8e4df;
+  --color-border-2:   #d6d0ca;
 
   /* Text Colors */
-  --color-text-primary:   #1c1917;  /* Near-black warm */
-  --color-text-secondary: #6b6560;  /* Muted */
-  --color-text-tertiary:  #9c958e;  /* Placeholder */
+  --color-text-primary:   #1c1917;
+  --color-text-secondary: #6b6560;
+  --color-text-tertiary:  #9c958e;
   --color-text-inverse:   #ffffff;
 
   /* Radius */
@@ -75,7 +75,6 @@
     min-height: 100dvh;
   }
 
-  /* Typography scale */
   h1 { @apply text-4xl font-bold leading-tight text-stone-900; }
   h2 { @apply text-3xl font-bold leading-tight text-stone-900; }
   h3 { @apply text-2xl font-bold leading-snug text-stone-900; }
@@ -99,7 +98,6 @@
     font-size: inherit;
   }
 
-  /* Numeric display — use tabular nums for prices */
   .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
@@ -107,8 +105,6 @@
    COMPONENT LAYER
    ═══════════════════════════════════════════════════════════════════════════ */
 @layer components {
-
-  /* ── Page Wrappers ──────────────────────────────────────────────────── */
   .page-wrapper {
     @apply min-h-screen bg-surface-warm flex flex-col;
   }
@@ -117,17 +113,14 @@
     @apply max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8;
   }
 
-  /* Buyer pages have bottom nav on mobile — add padding */
   .buyer-page-content {
     @apply pb-24 md:pb-8;
   }
 
-  /* Farmer pages have bottom nav on mobile */
   .farmer-page-content {
     @apply pb-24 md:pb-8;
   }
 
-  /* ── Cards ──────────────────────────────────────────────────────────── */
   .card {
     @apply bg-white rounded-xl border border-surface-border shadow-card overflow-hidden;
   }
@@ -150,7 +143,6 @@
     @apply bg-surface-muted rounded-xl border border-surface-border overflow-hidden;
   }
 
-  /* ── Inputs ─────────────────────────────────────────────────────────── */
   .field-input {
     @apply w-full px-4 py-3 rounded-lg border border-surface-border bg-white
            text-stone-900 placeholder:text-stone-400 text-base
@@ -176,7 +168,6 @@
     @apply mt-1.5 text-xs text-danger-600 flex items-center gap-1;
   }
 
-  /* ── Badges / Pills ──────────────────────────────────────────────────── */
   .badge {
     @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full
            text-xs font-semibold border leading-none whitespace-nowrap;
@@ -190,7 +181,6 @@
     @apply badge px-3 py-1 text-sm;
   }
 
-  /* Status badge variants */
   .badge-success { @apply badge bg-forest-50 text-forest-700 border-forest-200; }
   .badge-warning { @apply badge bg-warning-50 text-warning-700 border-warning-100; }
   .badge-danger  { @apply badge bg-danger-50  text-danger-700  border-danger-100; }
@@ -198,12 +188,10 @@
   .badge-neutral { @apply badge bg-stone-100  text-stone-600   border-stone-200; }
   .badge-earth   { @apply badge bg-earth-50   text-earth-700   border-earth-200; }
 
-  /* ── Dividers ────────────────────────────────────────────────────────── */
   .divider {
     @apply w-full h-px bg-surface-border my-4;
   }
 
-  /* ── Section & Page Headers ──────────────────────────────────────────── */
   .section-title {
     @apply text-xl font-bold text-stone-900;
   }
@@ -212,7 +200,6 @@
     @apply text-sm text-stone-500 mt-0.5;
   }
 
-  /* ── Avatar ──────────────────────────────────────────────────────────── */
   .avatar {
     @apply rounded-full bg-forest-100 flex items-center justify-center
            text-forest-700 font-bold overflow-hidden flex-shrink-0;
@@ -223,24 +210,16 @@
   .avatar-lg  { @apply avatar w-12 h-12 text-base; }
   .avatar-xl  { @apply avatar w-16 h-16 text-xl; }
 
-  /* ── Skeleton Loader ─────────────────────────────────────────────────── */
   .skeleton {
     @apply rounded-md bg-stone-200 animate-shimmer;
-    background: linear-gradient(
-      90deg,
-      #f0ede9 25%,
-      #e8e4e0 50%,
-      #f0ede9 75%
-    );
+    background: linear-gradient(90deg, #f0ede9 25%, #e8e4e0 50%, #f0ede9 75%);
     background-size: 200% 100%;
   }
 
-  /* ── Stat Card ───────────────────────────────────────────────────────── */
   .stat-card {
     @apply card p-5 flex flex-col gap-3;
   }
 
-  /* ── Table Styles ────────────────────────────────────────────────────── */
   .data-table {
     @apply w-full text-sm;
   }
@@ -265,141 +244,42 @@
     @apply border-b-0;
   }
 
-  /* ── Focus Ring ──────────────────────────────────────────────────────── */
   .focus-ring {
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-500
            focus-visible:ring-offset-2;
   }
-}
 
-/* ═══════════════════════════════════════════════════════════════════════════
-    MOBILE TOUCH OPTIMIZATIONS
-    ═══════════════════════════════════════════════════════════════════════════ */
-  * {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-  }
-
-  /* Smooth scrolling for mobile */
-  .scroll-smooth {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Prevent pull-to-refresh on mobile */
-  body {
-    overscroll-behavior: contain;
-  }
-
-  /* Better touch targets */
   .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Active state for buttons */
   .btn-press:active {
     transform: scale(0.96);
     opacity: 0.9;
   }
 
-  /* Card press effect */
   .card-press:active {
     transform: scale(0.98);
   }
 
-  /* ── Progressive enhancements ─────────────────────────────────────────────── */
-  @media (hover: hover) {
-    .hover-lift:hover {
-      transform: translateY(-2px);
-    }
-    .hover-lift-sm:hover {
-      transform: translateY(-1px);
-    }
-    .hover-grow:hover {
-      transform: scale(1.02);
-    }
-    .hover-glow:hover {
-      box-shadow: 0 0 20px rgba(26, 157, 101, 0.15);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════
-    LOADING STATES
-    ═══════════════════════════════════════════════════════════════════════════════════ */
-  .skeleton {
-    @apply rounded-md bg-stone-200;
-    background: linear-gradient(90deg, #e8e4e0 25%, #d9d3cd 50%, #e8e4e0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-wave 1.5s ease-in-out infinite;
-  }
-
-  @keyframes skeleton-wave {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Shimmer effect for loading states */
-  .shimmer {
-    @apply relative overflow-hidden;
-  }
-
-  .shimmer::after {
-    content: '';
-    @apply absolute inset-0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.4),
-      transparent
-    );
-    animation: shimmer-light 1.5s ease-in-out infinite;
-  }
-
-  @keyframes shimmer-light {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════
-    SCROLLBAR STYLING
-    ═══════════════════════════════════════════════════════════════════════════ */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--color-surface-2); }
-  ::-webkit-scrollbar-thumb {
-    background: #c5bfb9;
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover { background: #a09a94; }
-
-  /* Hide scrollbar but allow scroll on mobile */
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
 
-  /* Smooth scroll snap for carousels */
   .snap-x-mandatory {
     scroll-snap-type: x mandatory;
   }
+
   .snap-center {
     scroll-snap-align: center;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-    IMPROVED INPUTS FOR MOBILE
-    ═══════════════════════════════════════════════════════════════════════════ */
   input[type="text"],
   input[type="tel"],
   input[type="email"],
@@ -407,7 +287,7 @@
   input[type="password"],
   textarea,
   select {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     -webkit-appearance: none;
     appearance: none;
   }
@@ -422,7 +302,6 @@
     -moz-appearance: textfield;
   }
 
-  /* Better select dropdowns */
   select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6560' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -430,9 +309,6 @@
     padding-left: 36px;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-    PAGE LOAD ANIMATIONS
-    ═══════════════════════════════════════════════════════════════════════════ */
   .page-enter {
     opacity: 0;
     transform: translateY(8px);
@@ -444,7 +320,6 @@
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
   }
 
-  /* Stagger children animations */
   .stagger-children > * {
     opacity: 0;
     animation: fade-in 0.4s ease-out forwards;
@@ -459,7 +334,6 @@
   .stagger-children > *:nth-child(7) { animation-delay: 300ms; }
   .stagger-children > *:nth-child(8) { animation-delay: 350ms; }
 
-  /* Mobile-first card improvements */
   .mobile-card {
     @apply bg-white rounded-xl shadow-sm border border-surface-border;
   }
@@ -470,12 +344,10 @@
     }
   }
 
-  /* Better tap targets */
   .tap-pad {
     @apply p-3;
   }
 
-  /* Icon button improvements */
   .icon-btn {
     @apply w-10 h-10 flex items-center justify-center rounded-full;
     @apply transition-all duration-150;
@@ -486,7 +358,6 @@
     @apply w-8 h-8;
   }
 
-  /* Floating action button */
   .fab {
     @apply fixed bottom-20 right-4 z-50;
     @apply w-14 h-14 rounded-full;
@@ -502,14 +373,12 @@
     }
   }
 
-  /* Improved mobile navigation */
   .mobile-nav {
     @apply fixed bottom-0 left-0 right-0 z-40;
     @apply bg-white/95 backdrop-blur-md border-t border-surface-border;
     @apply safe-bottom;
   }
 
-  /* Better spacing for mobile */
   .mobile-spacing {
     @apply px-4;
   }
@@ -520,19 +389,16 @@
     }
   }
 
-  /* Visual hierarchy */
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Better links */
   .link {
     @apply text-forest-600 underline-offset-4;
     @apply hover:text-forest-700 hover:underline;
     @apply transition-colors duration-150;
   }
 
-  /* Mobile grid improvements */
   .mobile-grid {
     @apply grid grid-cols-2 gap-3;
   }
@@ -549,12 +415,10 @@
     }
   }
 
-  /* Product grid */
   .product-grid {
     @apply grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5;
   }
 
-  /* Better list items */
   .list-item {
     @apply flex items-center gap-3;
     @apply p-3 sm:p-4;
@@ -564,7 +428,6 @@
     @apply active:bg-stone-100;
   }
 
-  /* Chip/Badge improvements */
   .chip {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5;
     @apply rounded-full text-sm font-medium;
@@ -576,7 +439,6 @@
     @apply px-2.5 py-1 text-xs;
   }
 
-  /* Empty state improvements */
   .empty-state {
     @apply flex flex-col items-center justify-center text-center;
     @apply py-12 px-6;
@@ -586,7 +448,6 @@
     @apply text-4xl mb-4 opacity-50;
   }
 
-  /* Better modal/dialog */
   .dialog {
     @apply fixed inset-0 z-50;
     @apply flex items-center justify-center p-4;
@@ -606,21 +467,59 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MOBILE SAFE-AREA SUPPORT (iPhone notch, home indicator)
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top    { padding-top:    env(safe-area-inset-top); }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    ARABIC RTL OVERRIDES
    ═══════════════════════════════════════════════════════════════════════════ */
 [dir="rtl"] .ltr-override { direction: ltr; text-align: left; }
 
-/* Phone numbers, prices, codes — always LTR */
 .dir-ltr { direction: ltr; unicode-bidi: embed; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PRINT
+   SCROLLBAR STYLING
    ═══════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--color-surface-2); }
+::-webkit-scrollbar-thumb {
+  background: #c5bfb9;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: #a09a94; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE TOUCH OPTIMIZATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overscroll-behavior: contain;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════════════════════════ */
 @media print {
   .no-print { display: none !important; }
   body { background: white; }
