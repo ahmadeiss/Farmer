@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { authApi, extractApiError } from "@/lib/api";
+import { authApi, cartApi, extractApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { useGuestOnly } from "@/hooks/useAuthGuard";
 import Button from "@/components/ui/Button";
@@ -49,8 +49,64 @@ function LoginPageContent() {
       <div className="min-h-screen bg-surface-warm flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
       </div>
-    );
+);
+}
+
+const GUEST_CART_KEY = "hasaad-guest-cart";
+
+interface GuestCartItem {
+  productId: number;
+  productTitle: string;
+  unitPrice: number;
+  unitDisplay: string;
+  qty: number;
+}
+
+async function migrateGuestCart(
+  user: { role: string },
+  router: ReturnType<typeof useRouter>,
+  searchParams: ReturnType<typeof useSearchParams>
+) {
+  if (typeof window === "undefined") return;
+
+  const stored = localStorage.getItem(GUEST_CART_KEY);
+  if (!stored) {
+    navigateByRole(user, router, searchParams);
+    return;
   }
+
+  try {
+    const guestItems: GuestCartItem[] = JSON.parse(stored);
+    if (guestItems.length === 0) {
+      navigateByRole(user, router, searchParams);
+      return;
+    }
+
+    for (const item of guestItems) {
+      await cartApi.addToCart(item.productId, item.qty);
+    }
+
+    localStorage.removeItem(GUEST_CART_KEY);
+    toast.success(`تمت إضافة ${guestItems.length} منتجات إلى سلتك ✓`);
+  } catch {
+    localStorage.removeItem(GUEST_CART_KEY);
+  }
+
+  navigateByRole(user, router, searchParams);
+}
+
+function navigateByRole(user: { role: string }, router: any, searchParams: any) {
+  const next = searchParams.get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    router.push(next);
+    return;
+  }
+
+  if (user.role === "farmer") router.push("/farmer/dashboard");
+  else if (user.role === "admin") router.push("/admin/dashboard");
+  else if (user.role === "driver") router.push("/driver/dashboard");
+  else router.push("/marketplace");
+}
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -60,18 +116,7 @@ function LoginPageContent() {
       setAuth(user, { access, refresh });
       toast.success(`أهلاً ${user.full_name} 👋`);
 
-      // Honor ?next= if it's a safe relative path
-      const next = searchParams.get("next");
-      if (next && next.startsWith("/") && !next.startsWith("//")) {
-        router.push(next);
-        return;
-      }
-
-      // Default redirect based on role
-      if (user.role === "farmer") router.push("/farmer/dashboard");
-      else if (user.role === "admin") router.push("/admin/dashboard");
-      else if (user.role === "driver") router.push("/driver/dashboard");
-      else router.push("/marketplace");
+      await migrateGuestCart(user, router, searchParams);
     } catch (err: unknown) {
       toast.error(extractApiError(err, "بيانات الدخول غير صحيحة"));
     } finally {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,10 +19,46 @@ interface ProductCardProps {
 
 type ApiError = { response?: { data?: { code?: string; error?: string } } };
 
+const GUEST_CART_KEY = "hasaad-guest-cart";
+
+interface GuestCartItem {
+  productId: number;
+  productTitle: string;
+  unitPrice: number;
+  unitDisplay: string;
+  qty: number;
+}
+
+const getGuestCart = (): GuestCartItem[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(GUEST_CART_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
+
+const saveGuestCart = (items: GuestCartItem[]) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+};
+
+const addToGuestCart = (item: Omit<GuestCartItem, "qty">) => {
+  const cart = getGuestCart();
+  const existing = cart.find((i) => i.productId === item.productId);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    cart.push({ ...item, qty: 1 });
+  }
+  saveGuestCart(cart);
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
   const { user } = useAuthStore();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const isBuyer = user?.role === "buyer";
+  const isGuest = !user;
 
   // Max = available stock, min = 1 (always at least 1 unit)
   const maxQty = Math.max(1, Number(product.quantity_available));
@@ -232,6 +269,94 @@ export default function ProductCard({ product }: ProductCardProps) {
                   أضف
                 </>
               )}
+            </button>
+          </div>
+        )}
+
+        {/* Guest: show add button that saves to localStorage */}
+        {isGuest && !outOfStock && (
+          <div className="flex items-center gap-1.5 mt-3">
+            {/* − button */}
+            <button
+              type="button"
+              onClick={decrement}
+              disabled={qty <= 1}
+              aria-label="تقليل الكمية"
+              className="w-7 h-7 rounded-md border border-surface-border bg-white
+                         text-stone-600 font-bold text-sm flex items-center justify-center
+                         hover:bg-stone-100 active:scale-90 disabled:opacity-30
+                         transition-all duration-100 shrink-0"
+            >
+              −
+            </button>
+
+            {/* Quantity display */}
+            <span className="w-9 text-center text-sm font-bold text-stone-900 tabular-nums select-none">
+              {qty}
+            </span>
+
+            {/* + button */}
+            <button
+              type="button"
+              onClick={increment}
+              disabled={qty >= maxQty}
+              aria-label="زيادة الكمية"
+              className="w-7 h-7 rounded-md border border-surface-border bg-white
+                         text-stone-600 font-bold text-sm flex items-center justify-center
+                         hover:bg-stone-100 active:scale-90 disabled:opacity-30
+                         transition-all duration-100 shrink-0"
+            >
+              +
+            </button>
+
+            {/* unit label */}
+            <span className="text-2xs text-stone-400 truncate flex-1">{product.unit_display}</span>
+
+            {/* Add to cart for guest */}
+            <button
+              onClick={() => {
+                addToGuestCart({
+                  productId: product.id,
+                  productTitle: product.title,
+                  unitPrice: Number(product.price),
+                  unitDisplay: product.unit_display,
+                });
+                toast.success(
+                  (t) => (
+                    <div className="flex flex-col gap-2 text-sm text-right" dir="rtl">
+                      <p className="font-bold text-stone-900">
+                        أُضيف {qty} {product.unit_display} إلى السلة ✓
+                      </p>
+                      <p className="text-stone-600 text-xs leading-relaxed">
+                        سجّل دخولك لاستكمال الشراء
+                      </p>
+                      <button
+                        onClick={() => {
+                          toast.dismiss(t.id);
+                          router.push("/login?redirect=/cart");
+                        }}
+                        className="bg-forest-500 hover:bg-forest-600 text-white
+                                   text-xs font-bold py-1.5 px-3 rounded-lg transition-colors"
+                      >
+                        تسجيل الدخول الآن
+                      </button>
+                    </div>
+                  ),
+                  { duration: 8000, style: { maxWidth: "340px" } }
+                );
+                setQty(1);
+              }}
+              aria-label={`إضافة ${product.title} إلى السلة`}
+              className="shrink-0 h-7 px-2.5 bg-forest-500 hover:bg-forest-600
+                         text-white rounded-lg text-xs font-bold
+                         flex items-center gap-1
+                         transition-all duration-150 active:scale-90 shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m5-9l2 9" />
+              </svg>
+              أضف
             </button>
           </div>
         )}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { cartApi } from "@/lib/api";
@@ -18,10 +19,41 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import type { Cart } from "@/types";
 
+const GUEST_CART_KEY = "hasaad-guest-cart";
+
+interface GuestCartItem {
+  productId: number;
+  productTitle: string;
+  unitPrice: number;
+  unitDisplay: string;
+  qty: number;
+}
+
+const getGuestCart = (): GuestCartItem[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(GUEST_CART_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+};
+
+const clearGuestCart = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(GUEST_CART_KEY);
+};
+
 export default function CartPage() {
   const { user } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setGuestCart(getGuestCart());
+  }, []);
 
   const { data: cart, isLoading } = useQuery<Cart>({
     queryKey: ["cart"],
@@ -54,6 +86,89 @@ export default function CartPage() {
   const total = Number(cart?.total ?? 0);
   const DELIVERY_FEE = 0;
   const farmersCount = new Set(cart?.items.map((item) => item.farmer_id) ?? []).size;
+
+  const guestTotal = guestCart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
+
+  if (mounted && guestCart.length > 0 && (!user || user.role !== "buyer")) {
+    return (
+      <div className="min-h-screen flex flex-col bg-surface-warm">
+        <TopHeader />
+        <main className="flex-1 page-container py-6 buyer-page-content">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-stone-900">سلة التسوق</h1>
+            <p className="text-sm text-stone-400 mt-0.5">{guestCart.length} منتج</p>
+          </div>
+
+          <div className="card p-5 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-forest-100 rounded-full flex items-center justify-center text-xl">
+                🛒
+              </div>
+              <div>
+                <h2 className="font-bold text-stone-900">سلتك السابقة</h2>
+                <p className="text-sm text-stone-500">
+                  have some items saved from your previous visit
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              {guestCart.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center text-sm">
+                  <span className="text-stone-600 flex-1 min-w-0 truncate">
+                    {item.productTitle}
+                    <span className="text-stone-400 ms-1">×{item.qty}</span>
+                  </span>
+                  <span className="font-semibold text-stone-800 tabular-nums ms-3 shrink-0">
+                    {formatCurrency(item.unitPrice * item.qty)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-surface-border pt-3">
+              <div className="flex justify-between font-bold text-stone-900">
+                <span>الإجمالي</span>
+                <PriceDisplay amount={guestTotal} size="md" />
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-5 bg-forest-50 border-forest-100">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">💡</span>
+              <div>
+                <p className="font-bold text-forest-800 text-sm">سجّل دخولك لتحويل هذه المنتجات إلى سلتك</p>
+                <p className="text-xs text-forest-600 mt-1 leading-relaxed">
+                  ستُضاف هذه المنتجات إلى سلتك تلقائياً بعد تسجيل الدخول، وبإمكانك إتمام الشراء.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Button onClick={() => router.push("/login?redirect=/cart")} fullWidth size="lg" className="mt-4">
+            تسجيل الدخول للمتابعة
+          </Button>
+
+          <button
+            onClick={() => {
+              clearGuestCart();
+              setGuestCart([]);
+            }}
+            className="w-full text-center text-sm text-stone-400 mt-3 hover:text-stone-500 transition-colors"
+          >
+            مسح السلة
+          </button>
+
+          <Link href="/marketplace" className="block text-center text-sm text-forest-600 mt-4 hover:text-forest-700 font-medium transition-colors">
+            ← متابعة التسوق
+          </Link>
+        </main>
+        <Footer />
+        <BuyerBottomNav />
+      </div>
+    );
+  }
 
   if (!user || user.role !== "buyer") {
     return (
