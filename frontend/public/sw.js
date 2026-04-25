@@ -68,28 +68,27 @@ self.addEventListener("notificationclick", (event) => {
 
   if (event.action === "dismiss") return;
 
-  const targetUrl = event.notification.data?.url || "/";
-  const origin = self.location.origin;
-  const fullUrl = targetUrl.startsWith("http") ? targetUrl : origin + targetUrl;
+  const targetUrl = event.notification.data?.url || "/notifications";
+  const origin    = self.location.origin;
+  const fullUrl   = targetUrl.startsWith("http") ? targetUrl : origin + targetUrl;
 
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((windowClients) => {
-        // If a tab is already open on this origin, focus + navigate it
-        for (const client of windowClients) {
-          if (client.url.startsWith(origin) && "focus" in client) {
-            client.focus();
-            if ("navigate" in client) {
-              return client.navigate(fullUrl);
+        // Prefer a tab already open on this origin
+        const existing = windowClients.find((c) => c.url.startsWith(origin));
+        if (existing) {
+          // focus() returns a promise resolving to the focused WindowClient
+          return existing.focus().then((focused) => {
+            // navigate() moves the focused tab to the target URL
+            if (focused && "navigate" in focused) {
+              return focused.navigate(fullUrl);
             }
-            return;
-          }
+          });
         }
         // No open tab → open a new window
-        if (self.clients.openWindow) {
-          return self.clients.openWindow(fullUrl);
-        }
+        return self.clients.openWindow(fullUrl);
       })
   );
 });

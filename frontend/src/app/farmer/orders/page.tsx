@@ -10,7 +10,7 @@ import DashboardShell from "@/components/layout/DashboardShell";
 import { OrderCardSkeleton } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
-import StatusBadge from "@/components/ui/StatusBadge";
+import StatusBadge, { OrderProgress } from "@/components/ui/StatusBadge";
 import PriceDisplay from "@/components/ui/PriceDisplay";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -214,6 +214,13 @@ export default function FarmerOrdersPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Order Progress Tracker */}
+                {order.status !== "cancelled" && (
+                  <div className="mb-4 mt-1">
+                    <OrderProgress status={order.status as OrderStatus} />
+                  </div>
+                )}
 
                 {assignment && (
                   <div className="mb-4 rounded-xl border border-earth-100 bg-earth-50 p-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { notificationsApi } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
 import TopHeader from "@/components/layout/TopHeader";
@@ -12,16 +13,46 @@ import { cn } from "@/lib/utils";
 import type { Notification } from "@/types";
 
 const typeIcons: Record<string, string> = {
-  new_order: "📦",
+  new_order:    "📦",
   order_status: "🔄",
-  low_stock: "⚠️",
-  payment: "💰",
-  review: "⭐",
-  general: "🔔",
+  low_stock:    "⚠️",
+  payment:      "💰",
+  review:       "⭐",
+  general:      "🔔",
 };
+
+const typeLabels: Record<string, string> = {
+  new_order:    "طلب جديد",
+  order_status: "تحديث الطلب",
+  low_stock:    "تنبيه المخزون",
+  payment:      "دفعة",
+  review:       "تقييم",
+  general:      "إشعار",
+};
+
+/** Resolve the deep-link URL from a notification's type + data */
+function getNotificationUrl(type: string, data: Record<string, unknown>): string {
+  switch (type) {
+    case "new_order":
+      return "/farmer/orders";
+    case "order_status":
+      return data.order_id ? `/orders/${data.order_id}` : "/orders";
+    case "low_stock":
+      return "/farmer/inventory";
+    case "payment":
+      return "/farmer/wallet";
+    case "review":
+      return data.order_id ? `/orders/${data.order_id}/review` : "/orders";
+    case "general":
+      return data.assignment_id ? "/driver/dashboard" : "/";
+    default:
+      return "/";
+  }
+}
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: notifications, isLoading } = useQuery<Notification[]>({
     queryKey: ["notifications"],
@@ -46,6 +77,15 @@ export default function NotificationsPage() {
       queryClient.invalidateQueries({ queryKey: ["unread-count"] });
     },
   });
+
+  /** Mark as read then navigate to the relevant page */
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.is_read) {
+      markRead(notification.id);
+    }
+    const url = getNotificationUrl(notification.notification_type, notification.data);
+    router.push(url);
+  };
 
   const unreadCount = notifications?.filter((n) => !n.is_read).length ?? 0;
 
@@ -94,20 +134,29 @@ export default function NotificationsPage() {
               <button
                 key={notification.id}
                 className={cn(
-                  "w-full text-start card p-4 transition-all duration-150",
-                  "hover:shadow-card-hover",
+                  "w-full text-start card p-4 transition-all duration-150 group",
+                  "hover:shadow-card-hover active:scale-[0.99]",
                   !notification.is_read
-                    ? "border-s-4 border-forest-400 bg-forest-50/40"
-                    : "opacity-80"
+                    ? "border-s-4 border-forest-400 bg-forest-50/50"
+                    : "opacity-75 hover:opacity-100"
                 )}
-                onClick={() => !notification.is_read && markRead(notification.id)}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center
-                                  justify-center text-xl shrink-0">
+                  {/* Icon with type-colored background */}
+                  <div className={cn(
+                    "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform duration-200 group-hover:scale-105",
+                    !notification.is_read ? "bg-forest-100" : "bg-stone-100"
+                  )}>
                     {typeIcons[notification.notification_type] || "🔔"}
                   </div>
+
                   <div className="flex-1 min-w-0">
+                    {/* Type label */}
+                    <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wide mb-0.5">
+                      {typeLabels[notification.notification_type] || "إشعار"}
+                    </p>
+
                     <div className="flex items-start justify-between gap-2">
                       <p className={cn(
                         "font-semibold text-sm leading-snug",
@@ -115,11 +164,21 @@ export default function NotificationsPage() {
                       )}>
                         {notification.title}
                       </p>
-                      {!notification.is_read && (
-                        <span className="w-2 h-2 bg-forest-500 rounded-full shrink-0 mt-1" />
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {!notification.is_read && (
+                          <span className="w-2 h-2 bg-forest-500 rounded-full" />
+                        )}
+                        {/* Navigation arrow */}
+                        <svg
+                          className="w-3.5 h-3.5 text-stone-300 group-hover:text-forest-500 transition-colors rotate-180"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
-                    <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+
+                    <p className="text-xs text-stone-500 mt-0.5 leading-relaxed line-clamp-2">
                       {notification.body}
                     </p>
                     <p className="text-2xs text-stone-400 mt-1.5">
