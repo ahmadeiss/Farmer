@@ -127,8 +127,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const outOfStock = !product.is_in_stock;
 
   return (
-    <div className="card flex flex-col h-full group hover:shadow-card-hover
-                    transition-all duration-200 hover:-translate-y-0.5">
+    <div className="card-interactive flex flex-col h-full group hover:shadow-card-hover
+                    transition-all duration-200 hover:-translate-y-1 active:scale-[0.98]">
       {/* Image */}
       <Link
         href={`/marketplace/${product.id}`}

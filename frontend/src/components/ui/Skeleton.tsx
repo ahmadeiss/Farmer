@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 interface SkeletonProps {
   className?: string;
   rounded?: "sm" | "md" | "lg" | "full";
+  animated?: boolean;
 }
 
-export function Skeleton({ className, rounded = "md" }: SkeletonProps) {
+export function Skeleton({ className, rounded = "md", animated = true }: SkeletonProps) {
   const roundedClass = {
     sm:   "rounded",
     md:   "rounded-md",
@@ -15,7 +16,16 @@ export function Skeleton({ className, rounded = "md" }: SkeletonProps) {
 
   return (
     <div
-      className={cn("skeleton h-4 w-full", roundedClass, className)}
+      className={cn(
+        "bg-stone-200",
+        animated && "animate-shimmer",
+        roundedClass,
+        className
+      )}
+      style={animated ? {
+        background: "linear-gradient(90deg, #e8e4e0 25%, #d9d3cd 50%, #e8e4e0 75%)",
+        backgroundSize: "200% 100%",
+      } : undefined}
       aria-hidden="true"
     />
   );
@@ -25,8 +35,9 @@ export function Skeleton({ className, rounded = "md" }: SkeletonProps) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="card animate-pulse" aria-hidden>
-      <Skeleton className="h-48 w-full" rounded="sm" />
+    <div className="card" aria-hidden>
+      <div className="relative aspect-[4/3] bg-stone-200 animate-shimmer" 
+           style={{ background: "linear-gradient(90deg, #e8e4e0 25%, #d9d3cd 50%, #e8e4e0 75%)", backgroundSize: "200% 100%" }} />
       <div className="p-4 space-y-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />

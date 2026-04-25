@@ -273,15 +273,336 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SCROLLBAR
-   ═══════════════════════════════════════════════════════════════════════════ */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--color-surface-2); }
-::-webkit-scrollbar-thumb {
-  background: #c5bfb9;
-  border-radius: 4px;
+    MOBILE TOUCH OPTIMIZATIONS
+    ═══════════════════════════════════════════════════════════════════════════ */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* Smooth scrolling for mobile */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent pull-to-refresh on mobile */
+  body {
+    overscroll-behavior: contain;
+  }
+
+  /* Better touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Active state for buttons */
+  .btn-press:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  /* Card press effect */
+  .card-press:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Progressive enhancements ─────────────────────────────────────────────── */
+  @media (hover: hover) {
+    .hover-lift:hover {
+      transform: translateY(-2px);
+    }
+    .hover-lift-sm:hover {
+      transform: translateY(-1px);
+    }
+    .hover-grow:hover {
+      transform: scale(1.02);
+    }
+    .hover-glow:hover {
+      box-shadow: 0 0 20px rgba(26, 157, 101, 0.15);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+    LOADING STATES
+    ═══════════════════════════════════════════════════════════════════════════════════ */
+  .skeleton {
+    @apply rounded-md bg-stone-200;
+    background: linear-gradient(90deg, #e8e4e0 25%, #d9d3cd 50%, #e8e4e0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-wave 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-wave {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer-light 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-light {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+    SCROLLBAR STYLING
+    ═══════════════════════════════════════════════════════════════════════════ */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--color-surface-2); }
+  ::-webkit-scrollbar-thumb {
+    background: #c5bfb9;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #a09a94; }
+
+  /* Hide scrollbar but allow scroll on mobile */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scroll snap for carousels */
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+  }
+  .snap-center {
+    scroll-snap-align: center;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+    IMPROVED INPUTS FOR MOBILE
+    ═══════════════════════════════════════════════════════════════════════════ */
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Better select dropdowns */
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6560' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    padding-left: 36px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+    PAGE LOAD ANIMATIONS
+    ═══════════════════════════════════════════════════════════════════════════ */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+
+  /* Stagger children animations */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fade-in 0.4s ease-out forwards;
+  }
+
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+  .stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+  .stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+  /* Mobile-first card improvements */
+  .mobile-card {
+    @apply bg-white rounded-xl shadow-sm border border-surface-border;
+  }
+
+  @media (min-width: 768px) {
+    .mobile-card {
+      @apply shadow-card;
+    }
+  }
+
+  /* Better tap targets */
+  .tap-pad {
+    @apply p-3;
+  }
+
+  /* Icon button improvements */
+  .icon-btn {
+    @apply w-10 h-10 flex items-center justify-center rounded-full;
+    @apply transition-all duration-150;
+    @apply active:scale-90;
+  }
+
+  .icon-btn-sm {
+    @apply w-8 h-8;
+  }
+
+  /* Floating action button */
+  .fab {
+    @apply fixed bottom-20 right-4 z-50;
+    @apply w-14 h-14 rounded-full;
+    @apply bg-forest-500 text-white shadow-lg;
+    @apply flex items-center justify-center;
+    @apply transition-all duration-200;
+    @apply active:scale-90;
+  }
+
+  @media (min-width: 768px) {
+    .fab {
+      @apply bottom-24 right-6;
+    }
+  }
+
+  /* Improved mobile navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 z-40;
+    @apply bg-white/95 backdrop-blur-md border-t border-surface-border;
+    @apply safe-bottom;
+  }
+
+  /* Better spacing for mobile */
+  .mobile-spacing {
+    @apply px-4;
+  }
+
+  @media (min-width: 640px) {
+    .mobile-spacing {
+      @apply px-6;
+    }
+  }
+
+  /* Visual hierarchy */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Better links */
+  .link {
+    @apply text-forest-600 underline-offset-4;
+    @apply hover:text-forest-700 hover:underline;
+    @apply transition-colors duration-150;
+  }
+
+  /* Mobile grid improvements */
+  .mobile-grid {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  @media (min-width: 640px) {
+    .mobile-grid {
+      @apply gap-4;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-grid {
+      @apply grid-cols-3 gap-5;
+    }
+  }
+
+  /* Product grid */
+  .product-grid {
+    @apply grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5;
+  }
+
+  /* Better list items */
+  .list-item {
+    @apply flex items-center gap-3;
+    @apply p-3 sm:p-4;
+    @apply rounded-lg;
+    @apply transition-colors duration-150;
+    @apply hover:bg-stone-50;
+    @apply active:bg-stone-100;
+  }
+
+  /* Chip/Badge improvements */
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5;
+    @apply rounded-full text-sm font-medium;
+    @apply transition-all duration-150;
+    @apply active:scale-95;
+  }
+
+  .chip-sm {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  /* Empty state improvements */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center;
+    @apply py-12 px-6;
+  }
+
+  .empty-state-icon {
+    @apply text-4xl mb-4 opacity-50;
+  }
+
+  /* Better modal/dialog */
+  .dialog {
+    @apply fixed inset-0 z-50;
+    @apply flex items-center justify-center p-4;
+  }
+
+  .dialog-backdrop {
+    @apply absolute inset-0 bg-black/50 backdrop-blur-sm;
+    @apply animate-fade-in;
+  }
+
+  .dialog-content {
+    @apply relative bg-white rounded-2xl shadow-modal;
+    @apply w-full max-w-lg max-h-[90vh] overflow-auto;
+    @apply animate-scale-in;
+  }
 }
-::-webkit-scrollbar-thumb:hover { background: #a09a94; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MOBILE SAFE-AREA SUPPORT (iPhone notch, home indicator)
