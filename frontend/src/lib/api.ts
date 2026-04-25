@@ -256,12 +256,24 @@ export const adminApi = {
   getWallets: () => apiClient.get("/wallets/admin/wallets/"),
   settleWallet: (farmerId: number, data: object) =>
     apiClient.post(`/wallets/admin/wallets/${farmerId}/settle/`, data),
+  // Product management
   getAdminProducts: (params?: object) => apiClient.get("/catalog/admin/products/", { params }),
+  getPendingProducts: () => apiClient.get("/catalog/admin/products/", { params: { pending: "true" } }),
+  getAdminProduct: (id: number) => apiClient.get(`/catalog/admin/products/${id}/`),
+  createProduct: (data: FormData | object) => apiClient.post("/catalog/admin/products/", data),
+  updateProduct: (id: number, data: FormData | object) =>
+    apiClient.patch(`/catalog/admin/products/${id}/`, data),
+  deleteProduct: (id: number) => apiClient.delete(`/catalog/admin/products/${id}/`),
+  approveProduct: (id: number) => apiClient.post(`/catalog/admin/products/${id}/approve/`),
+  rejectProduct: (id: number, reason?: string) =>
+    apiClient.post(`/catalog/admin/products/${id}/reject/`, { reason }),
   toggleProductVisibility: (productId: number, isActive: boolean) =>
     apiClient.patch(`/catalog/admin/products/${productId}/`, { is_active: isActive }),
 
   // User management
   getAllUsers: (params?: object) => apiClient.get("/auth/admin/users/", { params }),
+  createUser: (data: object) => apiClient.post("/auth/admin/users/create/", data),
+  deleteUser: (userId: number) => apiClient.delete(`/auth/admin/users/${userId}/delete/`),
   getPendingFarmers: () => apiClient.get("/auth/admin/farmers/pending/"),
   approveFarmer: (userId: number) => apiClient.post(`/auth/admin/farmers/${userId}/approve/`),
   rejectFarmer: (userId: number, reason?: string) =>

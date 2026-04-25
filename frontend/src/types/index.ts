@@ -57,15 +57,18 @@ export interface ProductList {
   is_low_stock: boolean;
   is_in_stock: boolean;
   is_active: boolean;
+  is_approved: boolean;
+  is_featured: boolean;
   harvest_date: string | null;
   category_name: string;
   farmer_name: string;
+  farmer_phone?: string;
+  farmer_is_verified?: boolean;
   farmer_location: string;
   farmer_governorate?: string;
   farmer_latitude?: string | null;
   farmer_longitude?: string | null;
   distance_km?: number | null;
-  is_featured: boolean;
   created_at: string;
 }
 

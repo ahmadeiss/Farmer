@@ -60,6 +60,38 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class AdminUserCreateSerializer(serializers.ModelSerializer):
+    """Admin-only registration — allows all roles including admin/driver."""
+
+    password = serializers.CharField(write_only=True, min_length=6)
+    password_confirm = serializers.CharField(write_only=True, min_length=6)
+
+    class Meta:
+        model = User
+        fields = ["full_name", "phone", "email", "role", "password", "password_confirm"]
+        extra_kwargs = {"email": {"required": False}}
+
+    def validate_phone(self, value):
+        normalized = value.strip().replace(" ", "")
+        if User.objects.filter(phone=normalized).exists():
+            raise serializers.ValidationError("رقم الهاتف مسجّل مسبقاً.")
+        return normalized
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("password_confirm"):
+            raise serializers.ValidationError({"password_confirm": "كلمات المرور غير متطابقة."})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("password_confirm", None)
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.is_active = True  # Admin-created accounts are always active
+        user.save()
+        return user
+
+
 class LoginSerializer(serializers.Serializer):
     """Phone + password login."""
 

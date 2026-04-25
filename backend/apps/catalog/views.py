@@ -15,6 +15,7 @@ from .serializers import (
     ProductListSerializer,
     ProductDetailSerializer,
     ProductCreateUpdateSerializer,
+    AdminProductCreateUpdateSerializer,
 )
 from .tasks import process_audio_transcription
 
@@ -61,7 +62,7 @@ class MarketplaceProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = (
-            Product.objects.filter(is_active=True, quantity_available__gt=0)
+            Product.objects.filter(is_active=True, is_approved=True, quantity_available__gt=0)
             .select_related("farmer", "farmer__farmer_profile", "category")
         )
         # Client-side sort for nearest-first (haversine is not trivially expressible
@@ -111,14 +112,32 @@ class FarmerProductViewSet(viewsets.ModelViewSet):
         return Product.objects.filter(farmer=self.request.user).select_related("category")
 
     def perform_create(self, serializer):
-        product = serializer.save(farmer=self.request.user)
-        # Trigger audio transcription if audio was uploaded
+        farmer = self.request.user
+        # Unverified farmers: product goes to pending approval (is_approved=False)
+        is_approved = farmer.is_verified
+        product = serializer.save(farmer=farmer, is_approved=is_approved)
+
+        if not is_approved:
+            # Notify admins about pending product review
+            try:
+                from apps.notifications.services import NotificationService
+                from apps.accounts.models import User as UserModel
+                for admin in UserModel.objects.filter(role="admin", is_active=True):
+                    NotificationService.notify_user(
+                        user=admin,
+                        title="🌱 منتج جديد يحتاج موافقة",
+                        body=f"أضاف {farmer.full_name} منتج «{product.title}» ويحتاج موافقتك.",
+                        notification_type="general",
+                        data={"product_id": product.id, "action": "product_approval"},
+                    )
+            except Exception:
+                pass
+
         if product.audio_file:
             process_audio_transcription.delay(product.id)
 
     def perform_update(self, serializer):
         product = serializer.save()
-        # Re-trigger transcription if audio was updated
         if "audio_file" in serializer.validated_data and product.audio_file:
             process_audio_transcription.delay(product.id)
 
@@ -136,7 +155,7 @@ class FarmerProductViewSet(viewsets.ModelViewSet):
 
 
 class AdminProductViewSet(viewsets.ModelViewSet):
-    """Admin: full product management."""
+    """Admin: full product management (CRUD + approve/reject)."""
 
     permission_classes = [IsAdmin]
     search_fields = ["title", "farmer__full_name", "farmer__phone"]
@@ -145,10 +164,56 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
-            return ProductCreateUpdateSerializer
+            return AdminProductCreateUpdateSerializer
         if self.action == "list":
             return ProductListSerializer
         return ProductDetailSerializer
 
     def get_queryset(self):
-        return Product.objects.select_related("farmer", "farmer__farmer_profile", "category").all()
+        qs = Product.objects.select_related("farmer", "farmer__farmer_profile", "category").all()
+        # ?pending=true → only products awaiting approval
+        if self.request.query_params.get("pending") == "true":
+            qs = qs.filter(is_approved=False)
+        return qs
+
+    @action(detail=True, methods=["post"], url_path="approve")
+    def approve_product(self, request, pk=None):
+        """Approve a pending product — makes it visible in the marketplace."""
+        product = self.get_object()
+        product.is_approved = True
+        product.is_active = True
+        product.save(update_fields=["is_approved", "is_active", "updated_at"])
+        # Notify farmer
+        try:
+            from apps.notifications.services import NotificationService
+            NotificationService.notify_user(
+                user=product.farmer,
+                title="✅ تمت الموافقة على منتجك",
+                body=f"تم اعتماد منتجك «{product.title}» وأصبح مرئياً في السوق.",
+                notification_type="general",
+                data={"product_id": product.id, "action": "product_approved"},
+            )
+        except Exception:
+            pass
+        return Response({"message": "تمت الموافقة على المنتج.", "id": product.id})
+
+    @action(detail=True, methods=["post"], url_path="reject")
+    def reject_product(self, request, pk=None):
+        """Reject (hide) a pending product and notify the farmer."""
+        product = self.get_object()
+        reason = request.data.get("reason", "لم يستوفِ المنتج معايير النشر.")
+        product.is_approved = False
+        product.is_active = False
+        product.save(update_fields=["is_approved", "is_active", "updated_at"])
+        try:
+            from apps.notifications.services import NotificationService
+            NotificationService.notify_user(
+                user=product.farmer,
+                title="❌ لم تتم الموافقة على منتجك",
+                body=f"لم يتم قبول منتج «{product.title}»: {reason}",
+                notification_type="general",
+                data={"product_id": product.id, "action": "product_rejected"},
+            )
+        except Exception:
+            pass
+        return Response({"message": "تم رفض المنتج.", "id": product.id})

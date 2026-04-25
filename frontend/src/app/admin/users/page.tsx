@@ -13,6 +13,8 @@ import Badge from "@/components/ui/Badge";
 import { TableRowSkeleton } from "@/components/ui/Skeleton";
 import type { User, UserRole } from "@/types";
 
+const ROLES: UserRole[] = ["buyer", "farmer", "driver", "admin"];
+
 const ROLE_LABELS: Record<UserRole, string> = {
   farmer: "مزارع",
   buyer: "مشترٍ",
@@ -31,6 +33,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
   const [activeFilter, setActiveFilter] = useState<"" | "true" | "false">("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery<{ count: number; results: User[] }>({
@@ -56,12 +60,22 @@ export default function AdminUsersPage() {
     onError: (err) => toast.error(extractApiError(err, "تعذّر تغيير حالة الحساب")),
   });
 
+  const { mutate: deleteUser, isPending: deleting } = useMutation({
+    mutationFn: (id: number) => adminApi.deleteUser(id),
+    onSuccess: () => {
+      toast.success("تم حذف المستخدم نهائياً 🗑️");
+      setDeleteId(null);
+      qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+    },
+    onError: (err) => toast.error(extractApiError(err, "تعذّر حذف المستخدم")),
+  });
+
   return (
     <DashboardShell role="admin">
       <PageHeader title="إدارة المستخدمين 👥" subtitle="عرض وتحكم بجميع حسابات المنصة" />
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-5">
+      {/* Top bar: filters + add button */}
+      <div className="flex flex-wrap gap-3 mb-5 items-center">
         <SearchBar
           containerClassName="sm:max-w-xs"
           value={search}
@@ -75,10 +89,7 @@ export default function AdminUsersPage() {
           className="border border-surface-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-forest-400"
         >
           <option value="">كل الأدوار</option>
-          <option value="farmer">مزارع</option>
-          <option value="buyer">مشترٍ</option>
-          <option value="driver">سائق</option>
-          <option value="admin">مسؤول</option>
+          {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
         </select>
         <select
           value={activeFilter}
@@ -89,6 +100,12 @@ export default function AdminUsersPage() {
           <option value="true">نشط</option>
           <option value="false">معطّل</option>
         </select>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="ml-auto px-4 py-2 bg-forest-600 text-white text-sm font-semibold rounded-xl hover:bg-forest-700 transition-colors flex items-center gap-2"
+        >
+          <span>➕</span> إضافة مستخدم
+        </button>
       </div>
 
       {!data?.results?.length && !isLoading ? (
@@ -104,7 +121,7 @@ export default function AdminUsersPage() {
                   <th>الدور</th>
                   <th>الحالة</th>
                   <th>تاريخ التسجيل</th>
-                  <th>إجراء</th>
+                  <th>الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,19 +142,28 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="text-stone-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
                         <td>
-                          {u.role !== "admin" && (
+                          <div className="flex gap-1.5">
+                            {u.role !== "admin" && (
+                              <button
+                                onClick={() => toggleUser({ userId: u.id, action: u.is_active ? "deactivate" : "activate" })}
+                                disabled={toggling}
+                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 ${
+                                  u.is_active
+                                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                    : "bg-forest-100 text-forest-700 hover:bg-forest-200"
+                                }`}
+                              >
+                                {u.is_active ? "تعطيل" : "تفعيل"}
+                              </button>
+                            )}
                             <button
-                              onClick={() => toggleUser({ userId: u.id, action: u.is_active ? "deactivate" : "activate" })}
-                              disabled={toggling}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 ${
-                                u.is_active
-                                  ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                  : "bg-forest-100 text-forest-700 hover:bg-forest-200"
-                              }`}
+                              onClick={() => setDeleteId(u.id)}
+                              className="px-2.5 py-1 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
+                              title="حذف الحساب نهائياً"
                             >
-                              {u.is_active ? "تعطيل" : "تفعيل"}
+                              🗑️
                             </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -149,6 +175,126 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      {/* Delete confirm modal */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 text-center">
+            <div className="text-5xl">🗑️</div>
+            <h3 className="text-lg font-bold text-stone-900">حذف الحساب نهائياً؟</h3>
+            <p className="text-sm text-stone-500">هذا الإجراء لا يمكن التراجع عنه. سيُحذف المستخدم وجميع بياناته.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-surface-border text-stone-600 text-sm font-semibold hover:bg-stone-50">إلغاء</button>
+              <button onClick={() => deleteUser(deleteId!)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50">
+                {deleting ? "جارٍ الحذف..." : "تأكيد الحذف"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add user modal */}
+      {showAddModal && (
+        <AddUserModal
+          onClose={() => setShowAddModal(false)}
+          onCreated={() => {
+            setShowAddModal(false);
+            qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+          }}
+        />
+      )}
     </DashboardShell>
+  );
+}
+
+/* ── Add User Modal ─────────────────────────────────────────────────── */
+function AddUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<UserRole>("buyer");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const { mutate: createUser, isPending } = useMutation({
+    mutationFn: () =>
+      adminApi.createUser({
+        full_name: fullName,
+        phone,
+        email: email || undefined,
+        role,
+        password,
+        password_confirm: confirmPassword,
+      }),
+    onSuccess: () => {
+      toast.success(`✅ تم إنشاء حساب ${ROLE_LABELS[role]} بنجاح`);
+      onCreated();
+    },
+    onError: (err) => toast.error(extractApiError(err, "تعذّر إنشاء الحساب")),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) { toast.error("كلمتا المرور غير متطابقتين"); return; }
+    if (password.length < 6) { toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
+    createUser();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h3 className="text-lg font-bold text-stone-900 mb-4">➕ إضافة مستخدم جديد</h3>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-stone-600 block mb-1">الاسم الكامل *</label>
+            <input required value={fullName} onChange={(e) => setFullName(e.target.value)}
+              className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-400"
+              placeholder="أحمد محمد" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-stone-600 block mb-1">رقم الهاتف *</label>
+            <input required value={phone} onChange={(e) => setPhone(e.target.value)} dir="ltr"
+              className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-400"
+              placeholder="+970591234567" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-stone-600 block mb-1">البريد الإلكتروني (اختياري)</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr"
+              className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-400"
+              placeholder="user@example.com" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-stone-600 block mb-1">الدور *</label>
+            <select value={role} onChange={(e) => setRole(e.target.value as UserRole)}
+              className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-forest-400">
+              {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-stone-600 block mb-1">كلمة المرور *</label>
+              <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr"
+                className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-400"
+                placeholder="••••••" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-stone-600 block mb-1">تأكيد كلمة المرور *</label>
+              <input required type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} dir="ltr"
+                className="w-full border border-surface-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-400"
+                placeholder="••••••" />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-surface-border text-stone-600 text-sm font-semibold hover:bg-stone-50">إلغاء</button>
+            <button type="submit" disabled={isPending}
+              className="flex-1 py-2.5 rounded-xl bg-forest-600 text-white text-sm font-semibold hover:bg-forest-700 disabled:opacity-50">
+              {isPending ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

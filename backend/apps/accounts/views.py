@@ -14,8 +14,9 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from apps.common.permissions import IsAdmin
 from .models import User
 from .serializers import (
-    RegisterSerializer, LoginSerializer, UserProfileSerializer,
-    ChangePasswordSerializer, OTPRequestSerializer, OTPVerifySerializer,
+    RegisterSerializer, AdminUserCreateSerializer, LoginSerializer,
+    UserProfileSerializer, ChangePasswordSerializer,
+    OTPRequestSerializer, OTPVerifySerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,37 @@ def admin_reject_farmer_view(request, user_id):
         "message": f"تم رفض وحذف طلب تسجيل المزارع {farmer_name}.",
         "reason": reason,
     })
+
+
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def admin_create_user_view(request):
+    """Admin: create a user with any role (including admin/driver)."""
+    serializer = AdminUserCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+    logger.info(f"Admin {request.user.phone} created user {user.phone} role={user.role}")
+    return Response(UserProfileSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAdmin])
+def admin_delete_user_view(request, user_id):
+    """Admin: permanently delete a user account."""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "المستخدم غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+
+    if user.role == "admin" and not request.user.is_staff:
+        return Response({"error": "لا يمكن حذف حساب مسؤول آخر."}, status=status.HTTP_403_FORBIDDEN)
+    if user.id == request.user.id:
+        return Response({"error": "لا يمكنك حذف حسابك الخاص."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user_name = user.full_name
+    user.delete()
+    logger.info(f"Admin {request.user.phone} deleted user {user_id} ({user_name})")
+    return Response({"message": f"تم حذف المستخدم {user_name} بنجاح."})
 
 
 @api_view(["PATCH"])

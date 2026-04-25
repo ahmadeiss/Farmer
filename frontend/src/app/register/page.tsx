@@ -40,12 +40,19 @@ export default function RegisterPage() {
 
 function RegisterPageContent() {
   const searchParams = useSearchParams();
-  const role = searchParams.get("role") || "buyer";
   const router = useRouter();
+  const role = (searchParams.get("role") === "farmer" ? "farmer" : "buyer") as "farmer" | "buyer";
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [farmerPending, setFarmerPending] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
+
+  // Switch role and update URL
+  const switchRole = (newRole: "farmer" | "buyer") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("role", newRole);
+    router.replace(`/register?${params.toString()}`);
+  };
 
   const {
     register,
@@ -213,12 +220,49 @@ function RegisterPageContent() {
             <span className="font-extrabold text-stone-900 text-xl">حصاد</span>
           </Link>
 
-          <h1 className="text-2xl font-bold text-stone-900 mb-1">
-            {role === "farmer" ? "🌾 أنشئ حساب مزارع" : "🛒 أنشئ حساب مشترٍ"}
-          </h1>
-          <p className="text-stone-400 text-sm mb-6">
+          <h1 className="text-2xl font-bold text-stone-900 mb-1">أنشئ حسابك</h1>
+          <p className="text-stone-400 text-sm mb-5">
             سجّل الآن واستمتع بمميزات حصرية — مجاناً تماماً
           </p>
+
+          {/* ── Role selector ── */}
+          <div className="grid grid-cols-2 gap-3 mb-6 p-1 bg-stone-100 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => switchRole("buyer")}
+              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                role === "buyer"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              <span className="text-lg">🛒</span>
+              مشترٍ
+            </button>
+            <button
+              type="button"
+              onClick={() => switchRole("farmer")}
+              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                role === "farmer"
+                  ? "bg-forest-600 text-white shadow-sm"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              <span className="text-lg">🌾</span>
+              مزارع
+            </button>
+          </div>
+
+          {/* Farmer notice banner */}
+          {role === "farmer" && (
+            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex gap-3">
+              <span className="text-xl shrink-0">⏳</span>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                حساب المزارع يحتاج <strong>موافقة الإدارة</strong> قبل التفعيل.
+                ستصلك إشعار فور مراجعة طلبك خلال 24 ساعة.
+              </p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
@@ -256,8 +300,14 @@ function RegisterPageContent() {
               {...register("password_confirm")}
             />
 
-            <Button type="submit" fullWidth size="lg" loading={isLoading}>
-              أنشئ حسابي
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              loading={isLoading}
+              className={role === "farmer" ? "bg-forest-600 hover:bg-forest-700" : undefined}
+            >
+              {role === "farmer" ? "🌾 أرسل طلب التسجيل" : "🛒 أنشئ حسابي"}
             </Button>
           </form>
 

@@ -198,13 +198,25 @@ function LoginPageContent() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-stone-500 mt-6">
-            ليس لديك حساب؟{" "}
-            <Link href="/register"
-              className="text-forest-600 font-semibold hover:text-forest-700 transition-colors">
-              أنشئ حساباً مجانياً
-            </Link>
-          </p>
+          <div className="mt-6 space-y-3">
+            <p className="text-center text-sm text-stone-500">
+              ليس لديك حساب؟
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/register?role=buyer"
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-surface-border text-sm font-semibold text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                🛒 مشترٍ
+              </Link>
+              <Link
+                href="/register?role=farmer"
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-forest-600 text-white text-sm font-semibold hover:bg-forest-700 transition-colors"
+              >
+                🌾 مزارع
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

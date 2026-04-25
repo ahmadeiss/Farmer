@@ -10,10 +10,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductListSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for marketplace listing."""
+    """Lightweight serializer for marketplace listing and admin list."""
 
     category_name = serializers.CharField(source="category.name_ar", read_only=True)
     farmer_name = serializers.CharField(source="farmer.full_name", read_only=True)
+    farmer_phone = serializers.CharField(source="farmer.phone", read_only=True)
+    farmer_is_verified = serializers.BooleanField(source="farmer.is_verified", read_only=True)
     farmer_location = serializers.SerializerMethodField()
     farmer_governorate = serializers.SerializerMethodField()
     farmer_latitude = serializers.SerializerMethodField()
@@ -26,10 +28,11 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "title", "image", "price", "unit", "unit_display",
             "quantity_available", "is_low_stock", "is_in_stock", "is_active",
-            "harvest_date", "category_name", "farmer_name", "farmer_location",
-            "farmer_governorate", "farmer_latitude", "farmer_longitude",
-            "distance_km",
-            "is_featured", "created_at",
+            "is_approved", "is_featured",
+            "harvest_date", "category_name",
+            "farmer_name", "farmer_phone", "farmer_is_verified",
+            "farmer_location", "farmer_governorate", "farmer_latitude", "farmer_longitude",
+            "distance_km", "created_at",
         ]
 
     def _profile(self, obj):
@@ -88,7 +91,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
-    """For farmers creating or editing products."""
+    """For farmers creating or editing products. is_approved is set by the system, not the farmer."""
 
     class Meta:
         model = Product
@@ -96,6 +99,19 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             "title", "description", "image", "audio_file",
             "category", "price", "unit", "quantity_available",
             "harvest_date", "low_stock_threshold", "is_active",
+        ]
+
+
+class AdminProductCreateUpdateSerializer(serializers.ModelSerializer):
+    """Admin full control: includes is_approved, is_featured, and farmer assignment."""
+
+    class Meta:
+        model = Product
+        fields = [
+            "title", "description", "image", "audio_file",
+            "category", "price", "unit", "quantity_available",
+            "harvest_date", "low_stock_threshold",
+            "is_active", "is_approved", "is_featured", "farmer",
         ]
 
     def validate_quantity_available(self, value):

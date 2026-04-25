@@ -108,6 +108,10 @@ class Product(TimeStampedModel):
     # Status
     is_active = models.BooleanField(default=True, db_index=True, verbose_name="نشط")
     is_featured = models.BooleanField(default=False, db_index=True, verbose_name="مميز")
+    is_approved = models.BooleanField(
+        default=True, db_index=True, verbose_name="معتمد من الأدمن",
+        help_text="منتجات المزارعين غير الموثقين تحتاج موافقة الأدمن قبل الظهور في السوق."
+    )
 
     # Low stock threshold
     low_stock_threshold = models.DecimalField(
