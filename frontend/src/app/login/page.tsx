@@ -79,20 +79,33 @@ function LoginPageContent() {
 
   return (
     <div className="min-h-screen bg-surface-warm flex">
-      {/* Left decorative panel – hidden on mobile */}
-      <div className="hidden lg:flex lg:w-2/5 bg-forest-800 flex-col justify-between p-10">
-        <Link href="/" className="flex items-center gap-3">
+      {/* Left panel with logo background */}
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-forest-800 via-forest-700 to-forest-900 flex-col justify-between p-8 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url('https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png')`,
+            backgroundSize: '40%',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            filter: 'blur(2px)',
+          }} />
+        </div>
+        
+        <div className="relative">
+          <Link href="/" className="flex items-center gap-3">
             <Image
               src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
               alt="حصاد"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-xl object-contain bg-white/10"
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-xl object-contain bg-white/10 p-2"
             />
-            <span className="text-white font-extrabold text-lg">حصاد</span>
+            <span className="text-white font-extrabold text-xl">حصاد</span>
           </Link>
+        </div>
 
-        <div className="space-y-3">
+        <div className="relative space-y-4">
           {[
             { icon: "🌾", text: "منتجات طازجة مباشرة من المزرعة" },
             { icon: "💵", text: "الدفع عند الاستلام — لا مخاطرة" },
@@ -105,7 +118,7 @@ function LoginPageContent() {
           ))}
         </div>
 
-        <p className="text-forest-400 text-xs">© 2025 حصاد — Hasaad</p>
+        <p className="relative text-forest-400 text-xs">© 2025 حصاد — Hasaad</p>
       </div>
 
       {/* Right form panel */}
@@ -116,9 +129,9 @@ function LoginPageContent() {
             <Image
               src="https://res.cloudinary.com/dutilondd/image/upload/v1777122878/logo_hasaad_v8s05t.png"
               alt="حصاد"
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-xl object-contain bg-forest-500 p-1"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-xl object-contain bg-forest-500 p-1.5"
             />
             <span className="font-extrabold text-stone-900 text-lg">حصاد</span>
           </Link>
