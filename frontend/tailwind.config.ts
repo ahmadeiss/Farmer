@@ -257,6 +257,24 @@ const config: Config = {
           "0%":   { height: "var(--radix-accordion-content-height)", opacity: "1" },
           "100%": { height: "0", opacity: "0" },
         },
+        "spin-slow": {
+          "0%":   { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "spin-reverse": {
+          "0%":   { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(-360deg)" },
+        },
+        "float-3d": {
+          "0%, 100%": { transform: "translateY(0px) rotateX(0deg) rotateY(0deg)" },
+          "25%":      { transform: "translateY(-8px) rotateX(2deg) rotateY(2deg)" },
+          "50%":      { transform: "translateY(4px) rotateX(-1deg) rotateY(-1deg)" },
+          "75%":      { transform: "translateY(-4px) rotateX(1deg) rotateY(-2deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(26,157,101,0.3)" },
+          "50%":      { boxShadow: "0 0 40px rgba(26,157,101,0.6)" },
+        },
       },
       animation: {
         "fade-in":         "fade-in 0.25s ease-out forwards",
@@ -273,6 +291,10 @@ const config: Config = {
         "heartbeat":      "heartbeat 1s ease-in-out infinite",
         "accordion-down": "accordion-down 0.3s ease-out",
         "accordion-up":   "accordion-up 0.3s ease-out",
+        "spin-slow":      "spin 20s linear infinite",
+        "spin-reverse":   "spin 15s linear infinite reverse",
+        "float-3d":     "float-3d 8s ease-in-out infinite",
+        "pulse-glow":    "pulse-glow 2s ease-in-out infinite",
       },
 
       // ── Backdrop blur ───────────────────────────────────────────────────
